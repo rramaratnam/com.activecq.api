@@ -1,0 +1,7 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Abstract HTML Template",
+    "jcr:description": "Provides a base HTML template implemenation. This template should only be extended and never used directly.",    
+    "componentGroup": ".hidden",
+    "sling:resourceSuperType": "foundation/components/page"
+}

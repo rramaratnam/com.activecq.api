@@ -1,0 +1,28 @@
+# osx noise
+.DS_Store
+profile
+
+# xcode noise
+build/*
+*.mode1
+*.mode1v3
+*.mode2v3
+*.perspective
+*.perspectivev3
+*.pbxuser
+*.xcworkspace
+xcuserdata
+
+# svn & cvs
+.svn
+CVS
+
+#netbeans & java
+target/
+.project
+.classpath
+.settings/
+.DS_Store
+nb-configuration.xml
+nbactions-development.xml
+settings.xml

@@ -1,0 +1,6 @@
+{
+    "jcr:primaryType": "cq:ClientLibraryFolder",
+    "categories": ["html5boilerplate", "html5"],
+    "dependencies": ["modernizr", "jquery"],
+    "embed": []   
+}

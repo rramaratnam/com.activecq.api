@@ -1,0 +1,3 @@
+#base=.
+
+yui.formalize.min.js

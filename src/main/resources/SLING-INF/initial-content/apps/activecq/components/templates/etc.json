@@ -1,0 +1,7 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Etc Utility Template",
+    "jcr:description": "Template used for utility pages under /etc.",    
+    "componentGroup": ".hidden",
+    "sling:resourceSuperType": "activecq/components/templates/html"
+}

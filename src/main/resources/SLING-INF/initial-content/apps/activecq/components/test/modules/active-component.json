@@ -1,0 +1,12 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Test - ActiveComponent",
+    "jcr:description": "Test Component for ActiveComponent",
+    
+    "componentGroup": ".hidden",
+    
+    "cq:htmlTag": {
+        "jcr:primaryType": "nt:unstructured",
+        "cq:tagName": "div"
+    }
+}

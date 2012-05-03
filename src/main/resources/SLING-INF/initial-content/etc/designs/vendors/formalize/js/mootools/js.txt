@@ -1,0 +1,3 @@
+#base=.
+
+mootools.formalize.min.js

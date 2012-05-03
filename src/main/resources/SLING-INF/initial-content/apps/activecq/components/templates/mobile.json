@@ -1,0 +1,7 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Mobile Template",
+    "jcr:description": "Provides a base Mobile template implemenation. This template should only be extended and never used directly.",    
+    "componentGroup": ".hidden",
+    "sling:resourceSuperType": "wcm/mobile/components/page"
+}

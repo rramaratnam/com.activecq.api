@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright 2012 david.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <name>ActiveCQ API</name>
+    <description>ActiveCQ API</description>
+    <groupId>com.activecq</groupId>
+    <artifactId>com.activecq.api</artifactId>
+    <modelVersion>4.0.0</modelVersion>
+    <version>2.0.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <url>http://activecq.com</url>
+    
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>    
+    
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+        
+    <scm>
+        <connection>scm:git:git@github.com:activecq/activecq.git</connection>
+        <developerConnection>scm:git@github.com:activecq/activecq.git</developerConnection>
+        <url>git@github.com:activecq/activecq.git</url>
+    </scm>  
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <file.encoding>utf-8</file.encoding>
+    </properties>
+        
+    <build>
+        <plugins>
+            
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>maven-jspc-plugin</artifactId>
+                <version>2.0.6</version>                
+                <configuration>
+                    <compilerSourceVM>1.5</compilerSourceVM>
+                    <compilerTargetVM>1.5</compilerTargetVM>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-jsp</id>
+                        <goals>
+                            <goal>jspc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+                <version>1.7.4</version>
+                <executions>
+                    <execution>
+                        <id>generate-scr-scrdescriptor</id>
+                        <goals>
+                            <goal>scr</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>org.apache.sling.scripting.jsp</artifactId>
+                        <version>2.0.20</version>
+                    </dependency>
+                </dependencies>
+            </plugin>           
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Name>${project.name}</Bundle-Name>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Activator>${project.artifactId}.Activator</Bundle-Activator>
+                        <Bundle-DocURL>http://activecq.com</Bundle-DocURL>                        
+
+                        <Sling-Test-Regexp>.*Test</Sling-Test-Regexp>
+                            
+                        <Embed-Directory>target/dependency</Embed-Directory>
+                        <Embed-StripGroup>true</Embed-StripGroup>
+            
+                        <Export-Package>
+                            ${project.artifactId}.*;version=${project.version},
+                            org.apache.jsp.apps.*;version=${project.version}
+                        </Export-Package>
+                        
+                        <Import-Package>*;resolution:=optional</Import-Package>
+                        <Private-Package></Private-Package>
+						
+                        <!-- Included resources folders (to be later referred): maven resources and JSP files -->
+                        <Include-Resource>
+                            {maven-resources},
+                            src/main/scripts
+                        </Include-Resource>
+						
+                        <!-- Resources available from within bundle (not available as CRX nodes):  compiled .class files and JSP files. -->
+                        <Sling-Bundle-Resources>
+                            /apps/activecq,
+                            /var/classes; path:=/org/apache/jsp/apps/activecq
+                        </Sling-Bundle-Resources>
+
+                        <!-- content initially copied into CRX nodes: properties as JSON descriptors -->
+                        <Sling-Initial-Content>
+                            SLING-INF/initial-content/apps/activecq; path:=/apps/activecq; overwrite:=false; overwriteProperties:=true; uninstall:=true,
+                            SLING-INF/initial-content/etc/designs; path:=/etc/designs; overwrite:=false; overwriteProperties:=true; uninstall:=true,
+                            SLING-INF/initial-content/content/activecq; path:=/content/activecq; overwrite:=false; overwriteProperties:=true; uninstall:=true
+                        </Sling-Initial-Content>
+                    </instructions>
+                </configuration>
+            </plugin>
+		                
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>maven-sling-plugin</artifactId>
+                <version>2.0.6</version>
+                <executions>
+                    <execution>
+                        <id>install-bundle</id>
+                        
+                        <goals>
+                            <goal>install</goal>
+                        </goals>
+                        
+                        <configuration>
+                            <slingUrl>${cq.scheme}://${cq.host}:${cq.port}</slingUrl>
+                            <slingUrlSuffix>/system/console</slingUrlSuffix>
+                            <user>${cq.user}</user>
+                            <password>${cq.password}</password>
+                            <mountByFS>false</mountByFS>
+                            <refreshPackages>false</refreshPackages>
+                            <bundleStart>true</bundleStart>
+                            <bundleStartLevel>20</bundleStartLevel>
+                            <usePut>false</usePut>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Standard Maven Support Plugins -->
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.2</version>
+            </plugin>            
+        </plugins>        
+    </build>
+    
+    <dependencies>
+        <!-- CQ -->
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-api</artifactId>
+            <version>5.4.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-commons</artifactId>
+            <version>5.4.6</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-commons</artifactId>
+            <version>5.4.2</version>
+        </dependency>        
+        
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-search</artifactId>
+            <version>5.4.6</version>            
+        </dependency>
+
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-mobile-api</artifactId>
+            <version>5.4.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.day.commons</groupId>
+            <artifactId>day-commons-jstl</artifactId>
+            <version>1.1.4</version>
+        </dependency>                
+                
+        <!-- Must exist before cq-xssprotection -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.4</version>
+        </dependency>                
+                
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-xssprotection</artifactId>
+            <version>5.4.0</version>
+        </dependency>        
+
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-foundation</artifactId>
+            <version>5.4.2</version>
+        </dependency>     
+                
+        <dependency>
+            <groupId>com.day.cq.dam</groupId>
+            <artifactId>cq-dam-api</artifactId>
+            <version>5.4.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.day.cq.wcm</groupId>
+            <artifactId>cq-wcm-taglib</artifactId>
+            <version>5.4.0</version>
+        </dependency>        
+
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-widgets</artifactId>
+            <version>5.4.2</version>
+        </dependency>                 
+                
+        <!-- Sling -->        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.api</artifactId>
+            <version>2.2.0</version>            
+        </dependency> 
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.json</artifactId>
+            <version>2.0.6</version>            
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.osgi</artifactId>
+            <version>2.0.6</version>            
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.settings</artifactId>
+            <version>1.0.0</version>            
+        </dependency>    
+
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.auth</artifactId>
+            <version>0.9.0-R966209</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.resource</artifactId>
+            <version>2.0.9-R1067909</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
+            <version>2.1.0</version>
+        </dependency>        
+  
+        <!-- JCR -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <version>2.0</version>            
+        </dependency> 
+        
+        <!-- Other -->
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.framework</artifactId>
+            <version>3.0.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.1.0</version>
+        </dependency>  
+        
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.1.0</version>
+        </dependency>           
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.2</version>
+        </dependency>     
+        
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>0.6</version>            
+        </dependency> 
+        
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.annotations</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.4</version>
+        </dependency> 
+        
+        <!-- Add other depedencies here -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.testing</artifactId>
+            <version>2.0.10</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.junit.core</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-i18n</artifactId>
+            <version>5.4.4</version>
+        </dependency>
+    </dependencies>
+            
+    <!-- Avoid adding repositories directly to the pom.xml - Use settings.xml instead -->
+    <repositories>
+        <repository>
+            <url>http://repo1.maven.org/maven2/</url>
+            <id>junit_4</id>
+            <layout>default</layout>
+            <name>Repository for library Library[junit_4]</name>
+        </repository>
+    </repositories>        
+    <pluginRepositories/>
+</project>

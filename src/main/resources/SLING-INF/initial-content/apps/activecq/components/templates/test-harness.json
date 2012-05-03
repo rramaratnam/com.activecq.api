@@ -1,0 +1,9 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Test Harness",
+    "jcr:description": "Template used as a test harness for testing components.",
+    "allowedChildren": [],
+    "allowedParents": [".*", "(.*)/test/(.*)"],
+    "componentGroup": ".hidden",   
+    "sling:resourceSuperType": "activecq/components/templates/html"
+}

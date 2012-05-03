@@ -1,0 +1,6 @@
+{
+    "jcr:primaryType": "cq:ClientLibraryFolder",
+    "categories": ["960.16col.rtl"],
+    "dependencies": [],
+    "embed": []   
+}

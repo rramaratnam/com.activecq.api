@@ -1,0 +1,14 @@
+{
+    "jcr:primaryType": "cq:Page",
+    
+    "jcr:content":
+    {
+        "jcr:primaryType": "cq:PageContent",
+        "jcr:title": "ActiveCQ",                
+        "sling:resourceType": "activecq/components/templates/test-harness",
+        "cq:template": "/apps/activecq/templates/test-harness",
+
+                
+        "cq:defaultView": "html"        
+    }
+}

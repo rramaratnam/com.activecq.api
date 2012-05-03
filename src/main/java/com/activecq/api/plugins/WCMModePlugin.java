@@ -1,0 +1,44 @@
+/*
+ * Copyright 2012 david.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.activecq.api.plugins;
+
+import com.day.cq.wcm.api.WCMMode;
+import org.apache.sling.api.SlingHttpServletRequest;
+
+/**
+ *
+ * @author david
+ */
+public class WCMModePlugin {
+
+    private WCMMode wcmMode;
+
+    public WCMModePlugin(ExposedPlugin exposed) {
+        this.wcmMode = WCMMode.fromRequest(exposed.getRequest());;
+    }
+
+    public void switchTo(SlingHttpServletRequest request, WCMMode mode) {
+        if (wcmMode != null) {
+            return;
+        }
+
+        wcmMode.toRequest(request);
+    }
+
+    public void switchBack(SlingHttpServletRequest request) {
+        this.wcmMode.toRequest(request);
+    }
+}

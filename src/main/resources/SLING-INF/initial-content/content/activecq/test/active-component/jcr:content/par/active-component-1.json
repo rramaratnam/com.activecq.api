@@ -1,0 +1,11 @@
+{
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "activecq/components/test/modules/active-component",
+    
+    "test-id": "1",
+    "string-val": "This is a string",
+    "double-val": 100000.00,
+    "long-val": 1,
+    "boolean-val": true,
+    "date-val": "2010-10-07T13:59:49.960+02:00"
+}
