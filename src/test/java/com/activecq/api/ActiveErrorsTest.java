@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
  */
 public class ActiveErrorsTest {
     
-    private Map<String, Object> map;
+    private Map<String, String> map;
     
     public ActiveErrorsTest() {
     }
@@ -43,7 +43,7 @@ public class ActiveErrorsTest {
     
     @Before
     public void setUp() {
-        map = new HashMap<String, Object>();
+        map = new HashMap<String, String>();
         map.put("valid-key", "This is the error message 1.");
         map.put("another-valid-key", "This is the error message 2.");
     }

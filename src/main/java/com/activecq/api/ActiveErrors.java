@@ -36,15 +36,15 @@ public class ActiveErrors {
     /**
      * Private data modeling attributes
      */
-    protected Map<String, Object> data;
+    protected Map<String, String> data;
 
     /**
      * Constructor for modeling the data object represented in the parameter Map
      * 
      * @param map
      */
-    public ActiveErrors(Map<String, Object> map) {
-        this.data = new HashMap<String, Object>(map);
+    public ActiveErrors(Map<String, String> map) {
+        this.data = new HashMap<String, String>(map);
     }
 
     /**
@@ -54,7 +54,7 @@ public class ActiveErrors {
      */
     @SuppressWarnings("unchecked")
     public ActiveErrors(SlingHttpServletRequest request) {
-        this.data = new HashMap<String, Object>();
+        this.data = new HashMap<String, String>();
 
         if (this.hasQueryParamErrorData(request)) {
             // Get query param error data and load into this object            
@@ -165,7 +165,7 @@ public class ActiveErrors {
      * 
      * @param map
      */
-    public void setAll(Map<String, ? extends Object> map) {
+    public void setAll(Map<String, String> map) {
         if (map == null) {
             return;
         }
