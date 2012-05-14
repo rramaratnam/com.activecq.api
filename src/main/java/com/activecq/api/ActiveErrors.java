@@ -15,13 +15,11 @@
  */
 package com.activecq.api;
 
+import com.activecq.api.utils.CookieUtil;
 import com.activecq.api.utils.TypeUtil;
-import com.day.cq.commons.SymmetricCrypt;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestParameter;
@@ -30,8 +28,7 @@ import org.apache.sling.commons.json.JSONObject;
 
 public class ActiveErrors {
 
-    public static final String CQ_ERRORS = "_e";
-    public static final String CQ_ERRORS_ENCRYPTED = ActiveForm.CQ_FORM_ENCRYPTED;
+    public static final String CQ_ERRORS = "_cq_e";
 
     /**
      * Private data modeling attributes
@@ -55,33 +52,23 @@ public class ActiveErrors {
     @SuppressWarnings("unchecked")
     public ActiveErrors(SlingHttpServletRequest request) {
         this.data = new HashMap<String, String>();
-
-        if (this.hasQueryParamErrorData(request)) {
-            // Get query param error data and load into this object            
-            RequestParameter encryptedRequestParam = request.getRequestParameter(CQ_ERRORS_ENCRYPTED);
-            String encryptedFlag = "false";
-            if(encryptedRequestParam != null) {
-                encryptedFlag = request.getRequestParameter(CQ_ERRORS_ENCRYPTED).toString();
-            }
-            
-            final boolean isEncrypted = Boolean.valueOf(encryptedFlag);
-            
-            String errorData = request.getRequestParameter(CQ_ERRORS).getString();
-            
+        
+        if(this.hasIncomingRequestAttributeData(request)) {
+            final ActiveForm incomingForm = (ActiveForm) request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE);
+            if(incomingForm.hasErrors()) {
+                this.data = incomingForm.getErrors().toMap();
+            }            
+        } else if (this.hasIncomingQueryParamData(request)) {
+            String errorData = null;        
+            errorData = request.getRequestParameter(CQ_ERRORS).getString();
+        
+            if(StringUtils.stripToNull(errorData) != null) {
             try {
-                errorData = URLDecoder.decode(errorData, "UTF-8");
-
-                if (isEncrypted) {
-                    final Base64 base64 = new Base64(true);            
-                    errorData = base64.decode(errorData).toString();       
-                    errorData = SymmetricCrypt.decrypt(errorData);
+                    JSONObject jsonErrors = new JSONObject(ActiveForm.decode(errorData));
+                    this.data = TypeUtil.toMap(jsonErrors);
+                } catch (UnsupportedEncodingException e) {
+                } catch (JSONException e) {
                 }
-
-                JSONObject jsonErrors = new JSONObject(errorData);
-
-                this.data = TypeUtil.toMap(jsonErrors);
-            } catch (UnsupportedEncodingException e) {
-            } catch (JSONException e) {
             }
         }
     }
@@ -187,8 +174,8 @@ public class ActiveErrors {
      * Returns a copy of the underlying data Map
      * @return 
      */
-    public Map<String, Object> toMap() {
-        return new HashMap<String, Object>(this.data);
+    public Map<String, String> toMap() {
+        return new HashMap<String, String>(this.data);
     }    
     
     /**
@@ -206,11 +193,27 @@ public class ActiveErrors {
     /**
      * Checks if CQ Error data has been set on the request
      */
-    private boolean hasQueryParamErrorData(SlingHttpServletRequest request) {
+    private boolean hasIncomingRequestAttributeData(SlingHttpServletRequest request) {
+        if(request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE) != null) {
+            if(request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE) instanceof ActiveForm) {
+                ActiveForm form = (ActiveForm) request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE);
+                return form.hasErrors();
+            } 
+        }
+        
+        return false;
+    }
+
+    private boolean hasIncomingQueryParamData(SlingHttpServletRequest request) {            
         RequestParameter param = request.getRequestParameter(CQ_ERRORS);
         if (param == null) {
             return false;
         }
         return (StringUtils.stripToNull(param.getString()) != null);
     }
+        
+    
+    private boolean hasCookieErrorData(SlingHttpServletRequest request) {
+        return (CookieUtil.getCookie(request, CQ_ERRORS) != null);
+    }    
 }

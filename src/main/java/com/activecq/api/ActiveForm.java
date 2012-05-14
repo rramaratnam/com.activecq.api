@@ -16,7 +16,6 @@
 package com.activecq.api;
 
 import com.activecq.api.utils.TypeUtil;
-import com.day.cq.commons.SymmetricCrypt;
 import com.day.cq.commons.jcr.JcrConstants;
 import com.day.cq.wcm.api.Page;
 import java.io.UnsupportedEncodingException;
@@ -27,24 +26,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.JSONObject;
 
 public abstract class ActiveForm {
 
-    public static final String CQ_FORM = "_f";
-    public static final String CQ_FORM_ENCRYPTED = "_enc";
+    public static final String CQ_FORM = "_cq_f";
+    public static final String CQ_FORM_SUCCESS = "_cq_fs";
+    protected static final String CQ_FORM_REQUEST_ATTRIBUTE = "_cq_f_req_attr";
 
+    public final FailurePlugin Failure = new FailurePlugin();
+    public final SuccessPlugin Success = new SuccessPlugin();
+    
     /**
      * ActiveProperties representing system JCR/Sling node properties
      */
     public static class SystemProperties extends ActiveProperties {
+
         public static final String CREATED_AT = JcrConstants.JCR_CREATED;
         public static final String LAST_MODIFIED_AT = JcrConstants.JCR_LASTMODIFIED;
         public static final String PRIMARY_TYPE = JcrConstants.JCR_PRIMARYTYPE;
@@ -55,26 +61,30 @@ public abstract class ActiveForm {
     public static final SystemProperties SystemProperties = new SystemProperties();
 
     /**
-     * Empty ActiveProperty; ActiveResource objects should extend this Properties
-     * (ActiveResource.Properties)
+     * Empty ActiveProperty; ActiveResource objects should extend this
+     * Properties (ActiveResource.Properties)
      */
-    //protected static class Properties extends ActiveProperties {}
+    protected static class Properties extends ActiveProperties {
+    }
     public final ActiveProperties Properties;
-
-    
-    /***************************************************************************
-     * ActiveResource Implementation
-     **************************************************************************/
-    
+    /**
+     * *************************************************************************
+     * ActiveForm Implementation
+     * ************************************************************************
+     */
     /**
      * Private data modeling attributes
      */
     private Map<String, Object> data = new HashMap<String, Object>();
-    private ActiveErrors errors = new ActiveErrors(new HashMap<String, Object>());
+    private ActiveErrors errors = new ActiveErrors(new HashMap<String, String>());
+
+    protected ActiveForm(ActiveProperties properties) {
+        this.Properties = properties;
+    }
 
     /**
      * Constructor to modeling the parameter Resource
-     * 
+     *
      * @param resource
      */
     public ActiveForm(Resource resource) {
@@ -85,20 +95,20 @@ public abstract class ActiveForm {
 
     /**
      * Constructor for modeling the data object represented in the parameter Map
-     * 
+     *
      * @param map
      */
     public ActiveForm(Map<String, Object> map) {
         this.data = new HashMap<String, Object>(map);
-        this.Properties = new ActiveProperties();        
+        this.Properties = new ActiveProperties();
     }
 
     /**
      * Constructor for modeling the data object represented in the parameter Map
-     * 
+     *
      * @param map
      */
-    public ActiveForm(ActiveProperties properties, Map<String, Object> map) {
+    public ActiveForm(Map<String, Object> map, ActiveProperties properties) {
         for (String key : properties.getKeys()) {
             this.data.put(key, map.get(key));
         }
@@ -108,10 +118,9 @@ public abstract class ActiveForm {
 
     /**
      * Constructor for modeling the data object submitted via HTTP
-     * 
+     *
      * @param request
      */
-    @SuppressWarnings("unchecked")
     public ActiveForm(SlingHttpServletRequest request, ActiveProperties properties) {
         this.Properties = properties;
         this.data = new HashMap<String, Object>(request.getParameterMap().size());
@@ -120,40 +129,31 @@ public abstract class ActiveForm {
             this.data.put(key, StringUtils.stripToEmpty(request.getParameter(key)));
         }
 
-        if (this.hasQueryParamFormData(request)) {
-            // Get query param form data, and load into this object
-            
-            RequestParameter encryptedRequestParam = request.getRequestParameter(CQ_FORM_ENCRYPTED);
-            String encryptedFlag = "false";
-            if(encryptedRequestParam != null) {
-                encryptedFlag = request.getRequestParameter(CQ_FORM_ENCRYPTED).toString();
-            }
-            
-            final boolean isEncrypted = Boolean.valueOf(encryptedFlag);
-            String formData = request.getRequestParameter(CQ_FORM).getString();
-            try {
-
-                formData = URLDecoder.decode(formData, "UTF-8");
-                
-                if (isEncrypted) {
-                    final Base64 base64 = new Base64(true);                    
-                    formData = base64.decode(formData).toString();
-                    formData = SymmetricCrypt.decrypt(formData);
-                }
-
-                JSONObject jsonForm = new JSONObject(formData);
-
-                this.data = TypeUtil.toMap(jsonForm);
-            } catch (UnsupportedEncodingException e) {
-            } catch (JSONException e) {
-            }
-
+        if(this.hasIncomingRequestAttributeData(request)) {
+            // Get Form and Errors from Request Attr
+            // This is to handle when the "Forward" method is used
+            final ActiveForm incomingForm = (ActiveForm) request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE);
             this.errors = new ActiveErrors(request);
+            this.data = incomingForm.toMap();            
+        } else if (this.hasIncomingQueryParamData(request)) {
+            // Get Form and Erros from Query Params
+            // This is to handle the "Redirect" method
+            String formData = request.getRequestParameter(CQ_FORM).getString();
+            this.errors = new ActiveErrors(request);
+
+            if (StringUtils.stripToNull(formData) != null) {
+                try {
+                    JSONObject jsonForm = new JSONObject(decode(formData));
+                    this.data = TypeUtil.toMap(jsonForm);
+                } catch (UnsupportedEncodingException e) {
+                } catch (JSONException e) {
+                }
+            }
         }
     }
 
     /**
-     * 
+     *
      * @param key
      * @return
      */
@@ -163,7 +163,7 @@ public abstract class ActiveForm {
 
     /**
      * Checks of the value of for a key is empty (null or empty string)
-     * 
+     *
      * @param key
      * @return
      */
@@ -177,7 +177,7 @@ public abstract class ActiveForm {
 
     /**
      * Gets a String value from this.data
-     * 
+     *
      * @param key
      * @return
      */
@@ -187,7 +187,7 @@ public abstract class ActiveForm {
 
     /**
      * Get value from this.data
-     * 
+     *
      * @param <T>
      * @param key
      * @param defaultValue
@@ -204,7 +204,7 @@ public abstract class ActiveForm {
 
     /**
      * Get value from this.data
-     * 
+     *
      * @param <T>
      * @param key
      * @param type
@@ -222,22 +222,22 @@ public abstract class ActiveForm {
 
     /**
      * Stores a key/value into this.data
-     * 
+     *
      * @param key
      * @param value
      */
     public void set(String key, Object value) {
         this.set(key, value);
     }
-    
+
     public void set(String key, boolean value) {
         this.set(key, Boolean.valueOf(value));
     }
-    
+
     public void set(String key, double value) {
         this.set(key, Double.valueOf(value));
     }
-    
+
     public void set(String key, long value) {
         this.set(key, Long.valueOf(value));
     }
@@ -245,11 +245,11 @@ public abstract class ActiveForm {
     public void set(String key, int value) {
         this.set(key, Integer.valueOf(value).toString());
     }
-    
+
     /**
      * Takes all the key/values pairs in the parameter map and merges them into
      * this.data.
-     * 
+     *
      * @param map
      */
     public void setAll(Map<String, ? extends Object> map) {
@@ -260,19 +260,30 @@ public abstract class ActiveForm {
             this.data.put(key, map.get(key));
         }
     }
-    
-    /** 
-     * Alias for setAll(map)
-     * 
-     * @param map 
-     */
-    public void addAll(Map<String, ? extends Object> map) {
-        this.setAll(map);
+
+    protected void resetFormTo(Map<String, ? extends Object> map) {
+        if (map == null) {
+            map = new HashMap<String, String>();
+        }
+
+        this.data = (Map<String, Object>) map;
+    }
+
+    protected void resetErrorsTo(Map<String, String> map) {
+        if (map == null) {
+            map = new HashMap<String, String>();
+        }
+
+        this.errors = new ActiveErrors(map);
+    }
+
+    protected void resetErrorsTo(ActiveErrors errors) {
+        this.errors = new ActiveErrors(errors.toMap());
     }
 
     /**
      * Checks if any keys have been set
-     * 
+     *
      * @return
      */
     public boolean hasData() {
@@ -282,7 +293,7 @@ public abstract class ActiveForm {
     // Conversion methods
     /**
      * Convert the object data in JSON format
-     * 
+     *
      * @return JSONObject representation of this.data
      */
     public JSONObject toJSON() {
@@ -291,9 +302,9 @@ public abstract class ActiveForm {
 
     /**
      * Returns this.data at Map object
-     * 
+     *
      * @return Map object representation of this.data (which is already its
-     *         native data type)
+     * native data type)
      */
     public Map<String, Object> toMap() {
         return new HashMap<String, Object>(this.data);
@@ -302,7 +313,7 @@ public abstract class ActiveForm {
     // ActiveError Wrapper/Helper Methods
     /**
      * Gets this' ActiveError object
-     * 
+     *
      * @return ActiveError object
      */
     public ActiveErrors getErrors() {
@@ -311,7 +322,7 @@ public abstract class ActiveForm {
 
     /**
      * Checks if this' ActiveError object contains any errors
-     * 
+     *
      * @return true if ActiveError object has errors
      */
     public boolean hasErrors() {
@@ -320,7 +331,7 @@ public abstract class ActiveForm {
 
     /**
      * Checks if an error has been associated with a specific field (key)
-     * 
+     *
      * @param key
      * @return
      */
@@ -330,7 +341,7 @@ public abstract class ActiveForm {
 
     /**
      * Gets the error message (String) associated with a specific field (key)
-     * 
+     *
      * @param key
      * @return
      */
@@ -344,7 +355,7 @@ public abstract class ActiveForm {
 
     /**
      * Adds an error entry and message to this's ActiveError object
-     * 
+     *
      * @param key
      * @param value
      */
@@ -352,100 +363,40 @@ public abstract class ActiveForm {
         this.errors.set(key, value);
     }
 
-    /** 
-     * Alias for setError(key, value)
-     * 
-     * @param key
-     * @param value 
-     */
-    public void addError(String key, String value) {
-        this.setError(key, value);
-    }
-    
-    /** 
+    /**
      * Adds an error entry to this's ActiveError object
-     * 
-     * @param key 
+     *
+     * @param key
      */
     public void setError(String key) {
         this.errors.set(key);
     }
-    
-    /** 
-     * Alias for setError(key)
-     * @param key 
-     */
-    public void addError(String key) {
-        this.setError(key);
-    }
-    
+
     // Form Methods
     /**
-     * Convenience method for getting Query Parameters as encrypted
+     * *
+     * Returns the a string of query parameters that hold Form and Form Error
+     * data
+     *
+     * @return
+     * @throws JSONException
+     * @throws UnsupportedEncodingException
      */
     public String getQueryParameters() throws JSONException,
             UnsupportedEncodingException {
-        return getQueryParameters(true);
-    }
 
-    /***
-     * Returns the a string of query parameters that hold Form and Form Error data
-     * 
-     * @return
-     * @throws JSONException
-     * @throws UnsupportedEncodingException 
-     */
-    public String getQueryParameters(boolean encrypt) throws JSONException,
-            UnsupportedEncodingException {
+        final String formData = this.toJSON().toString();
+        final String errorData = this.getErrors().toJSON().toString();
 
-        String formData = this.toJSON().toString();
-        String errorData = this.getErrors().toJSON().toString();
-
-        if (encrypt) {
-            final Base64 base64 = new Base64(true);
-            formData = SymmetricCrypt.encrypt(formData);
-            errorData = SymmetricCrypt.encrypt(errorData);
-
-            formData = base64.encodeToString(formData.getBytes());
-            errorData = base64.encodeToString(errorData.getBytes());
-        }
-        
         String params = ActiveForm.CQ_FORM;
         params += "=";
-        params += URLEncoder.encode(formData, "UTF-8");
+        params += encode(formData);
         params += "&";
         params += ActiveErrors.CQ_ERRORS;
         params += "=";
-        params += URLEncoder.encode(errorData, "UTF-8");
-        
-        if(encrypt) {
-            params += "&";
-            params += ActiveForm.CQ_FORM_ENCRYPTED;
-            params += "=";
-            params += URLEncoder.encode("true", "UTF-8"); 
-        }
-        
+        params += encode(errorData);
+
         return params;
-    }
-
-    public String getRedirectPath(Page page) throws JSONException,
-            UnsupportedEncodingException {
-        return getRedirectPath(page, true);
-    }
-    
-        public String getRedirectPath(Page page, boolean encrypt) throws JSONException,
-            UnsupportedEncodingException {
-        return getRedirectPath(page.adaptTo(Resource.class), encrypt);
-    }
-    
-    public String getRedirectPath(Resource resource) throws JSONException,
-            UnsupportedEncodingException {
-        return getRedirectPath(resource, true);
-    }
-
-    public String getRedirectPath(Resource resource, boolean encrypt) throws JSONException,
-            UnsupportedEncodingException {
-        return resource.getPath().concat(".html?").concat(this.getQueryParameters(encrypt));
     }
 
     // Resource Methods
@@ -455,39 +406,142 @@ public abstract class ActiveForm {
     public int merge(Resource resource, boolean overwrite) {
         int count = 0;
         ValueMap resourceProperties = resource.adaptTo(ValueMap.class);
-        
+
         List<String> keys;
-        
-        if(Properties != null) {
+
+        if (Properties != null) {
             keys = Properties.getKeys();
         } else {
             keys = Arrays.asList(this.data.keySet().toArray(new String[0]));
         }
-        
+
         for (String key : keys) {
             if (resourceProperties.containsKey(key)) {
                 if (overwrite || this.isEmpty(key)) {
                     this.set(key, resourceProperties.get(key));
                     count++;
-                } 
+                }
             }
         }
-        
+
         return count;
     }
 
-    /***************************************************************************
-    * Private Methods
-    ***************************************************************************/
+    public String getRedirectPath(Page page) throws JSONException,
+            UnsupportedEncodingException {
+        return getRedirectPath(page.adaptTo(Resource.class));
+    }
 
+    public String getRedirectPath(Resource resource) throws JSONException,
+            UnsupportedEncodingException {
+        return getRedirectPath(resource.getPath().concat(".html"));
+    }
+
+    public String getRedirectPath(String path) throws JSONException,
+            UnsupportedEncodingException {
+        return path.concat("?").concat(this.getQueryParameters());
+    }
+
+    
+    /**
+     * *************************************************************************
+     * Private Methods
+     * *************************************************************************
+     */
     /**
      * Checks if CQ Form data has been set on the request
      */
-    private boolean hasQueryParamFormData(SlingHttpServletRequest request) {
+    private boolean hasIncomingRequestAttributeData(SlingHttpServletRequest request) {
+        if(request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE) != null) {
+            return (request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE) instanceof ActiveForm);
+        } 
+        
+        return false;
+    }
+    
+    private boolean hasIncomingQueryParamData(SlingHttpServletRequest request) {
         RequestParameter param = request.getRequestParameter(CQ_FORM);
         if (param == null) {
             return false;
         }
         return (StringUtils.stripToNull(param.getString()) != null);
+    }    
+
+    /**
+     * *************************************************************************
+     * Package Methods
+     * *************************************************************************
+     */
+    static String decode(String encodedData) throws UnsupportedEncodingException {
+        final Base64 base64 = new Base64(true);
+        final String tmp = base64.decode(encodedData).toString();
+        return URLDecoder.decode(tmp, "UTF-8");
     }
+
+    static String encode(String unencodedData) throws UnsupportedEncodingException {
+        final Base64 base64 = new Base64(true);
+        final String tmp = base64.encodeToString(unencodedData.getBytes());
+        return URLEncoder.encode(tmp, "UTF-8");
+    }
+
+    /***************************************************************************
+     * 
+     * Special ActiveForm Plugin Classes
+     * 
+     **************************************************************************/
+
+    public class FailurePlugin {
+        public String getRedirectPath(Page page) throws JSONException,
+                UnsupportedEncodingException {
+            return getRedirectPath(page.adaptTo(Resource.class));
+        }
+
+        public String getRedirectPath(Resource resource) throws JSONException,
+                UnsupportedEncodingException {
+            return getRedirectPath(resource.getPath().concat(".html"));
+        }
+
+        public String getRedirectPath(String path) throws JSONException,
+                UnsupportedEncodingException {
+            return path.concat("?").concat(getQueryParameters());
+        }        
+    
+        public void getFormPage(SlingScriptHelper sling, Page page) {
+            getFormPage(sling, page.adaptTo(Resource.class));
+        }
+        
+        public void getFormPage(SlingScriptHelper sling, Resource resource) {
+            getFormPage(sling, resource.getPath());
+        }        
+        
+        public void getFormPage(SlingScriptHelper sling, String path) {
+            sling.getRequest().setAttribute(CQ_FORM_REQUEST_ATTRIBUTE, this);
+            sling.forward(path);  
+        }
+    }
+    
+    
+    public class SuccessPlugin {
+        public String getRedirectPath(Page page, String message) throws JSONException,
+                UnsupportedEncodingException {
+            return getRedirectPath(page.adaptTo(Resource.class), message);
+        }
+
+        public String getRedirectPath(Resource resource, String message) throws JSONException,
+                UnsupportedEncodingException {
+            return getRedirectPath(resource.getPath().concat(".html"), message);
+        }
+
+        public String getRedirectPath(String path, String message) throws JSONException,
+                UnsupportedEncodingException {
+            if(StringUtils.stripToNull(message) == null) {
+                return path;
+            } else {    
+                message = StringEscapeUtils.escapeJavaScript(message);
+                return path.concat("?").concat(CQ_FORM_SUCCESS).concat("=").concat(message);                
+            }
+        }        
+    }    
 }
+
+
