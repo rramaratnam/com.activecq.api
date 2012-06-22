@@ -125,7 +125,10 @@
                             org.apache.jsp.apps.*;version=${project.version}
                         </Export-Package>
                         
-                        <Import-Package>*;resolution:=optional</Import-Package>
+                        <Import-Package>com.day.cq.i18n;resolution:=mandatory,
+                                        com.day.cq.*;resolution:=optional,
+                                        com.adobe.granite.*;resolution:=optional,
+                                        *</Import-Package>
                         <Private-Package></Private-Package>
 						
                         <!-- Included resources folders (to be later referred): maven resources and JSP files -->
@@ -391,11 +394,19 @@
             <artifactId>org.apache.sling.junit.core</artifactId>
             <version>1.0.6</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.junit.remote</artifactId>
+            <version>1.0.6</version>
+            <type>jar</type>
+        </dependency>
         
         <dependency>
-            <groupId>com.day.cq</groupId>
-            <artifactId>cq-i18n</artifactId>
-            <version>5.4.4</version>
+            <groupId>com.adobe.granite</groupId>
+            <artifactId>com.adobe.granite.i18n</artifactId>
+            <version>5.5.4</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
             
