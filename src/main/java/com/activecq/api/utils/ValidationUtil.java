@@ -183,16 +183,6 @@ public class ValidationUtil {
         }
     }
 
-    public static boolean isNumber(ActiveForm form, String key) {
-        if (!isPresent(form, key)) {
-            return false;
-        }
-
-        Object val = form.get(key);
-
-        
-        return Number.class.isAssignableFrom(val.getClass());
-    }
 
     public static boolean isOfFormat(ActiveForm form, String key, String regex) {
         if (!isPresent(form, key)) {
