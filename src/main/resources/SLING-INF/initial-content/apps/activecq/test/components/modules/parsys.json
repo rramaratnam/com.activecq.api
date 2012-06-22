@@ -1,0 +1,9 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Test - No Decoration Parsys",
+    "jcr:description": "Test Component that removes the Parsys's decoration",
+    
+    "componentGroup": ".hidden",
+    "cq:noDecoration": true,
+    "sling:resourceSuperType": "foundation/components/parsys"
+}

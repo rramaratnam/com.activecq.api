@@ -4,9 +4,5 @@
     "jcr:description": "Test Component for ActiveComponent",
     
     "componentGroup": ".hidden",
-    
-    "cq:htmlTag": {
-        "jcr:primaryType": "nt:unstructured",
-        "cq:tagName": "div"
-    }
+    "cq:noDecoration": true
 }
