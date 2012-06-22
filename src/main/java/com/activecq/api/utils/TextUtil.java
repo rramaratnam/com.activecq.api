@@ -17,7 +17,10 @@ package com.activecq.api.utils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
 /**
@@ -81,13 +84,25 @@ public class TextUtil {
         return null;
     }
 
+    /** 
+     * Returns first non-null value from the resource property.
+     * 
+     * @param <T>
+     * @param resource
+     * @param klass
+     * @param keys
+     * @return 
+     */
+    public static <T> T getFirstProperty(Resource resource, Class<T> klass, String... keys) {
+        return getFirstProperty(resource.adaptTo(ValueMap.class), klass, keys);
+    }
     
     /** 
      * Returns first non-null value from the resource property value map.
      * 
      * Ex. TextUtil.getFirstProperty(Date.class, 
      *                                  "jcr:lastModified",
-     *                                  "jcr"created")
+     *                                  "jcr:created")
      * 
      * If getLastModifiedDate() returns null, and getCreatedDate() returns not-null,
      * the value for getCreatedDate() is returned.
@@ -113,4 +128,28 @@ public class TextUtil {
 
         return null;
     }
+    
+    /** 
+     * Looks for <..> substrings in the parameter string. If any are found it assume Rich text.
+     * @param str
+     * @return 
+     */
+    public static boolean isRichText(String str) {
+        Pattern p = Pattern.compile("<[^>]+>");
+        Matcher m = p.matcher(str);
+        
+        return m.find();        
+    }
+    
+    /** 
+     * Checks is a String is null, of zero length, or all whitespace
+     * 
+     * Utilizes the StringUtils.stripToNull(..) method
+     * 
+     * @param str
+     * @return 
+     */
+    public static boolean isEmpty(String str) {
+        return StringUtils.stripToNull(str) == null;        
+    }  
 }
