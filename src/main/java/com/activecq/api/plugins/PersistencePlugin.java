@@ -28,7 +28,7 @@ public class PersistencePlugin {
     private Component component;
     private SlingHttpServletRequest request;
 
-    public PersistencePlugin(ExposedPlugin exposed) {
+    public PersistencePlugin(CorePlugin exposed) {
         this.component = exposed.getComponent();
         this.request = exposed.getRequest();
     }

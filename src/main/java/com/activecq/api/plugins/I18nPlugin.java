@@ -17,6 +17,7 @@ package com.activecq.api.plugins;
 
 import com.day.cq.i18n.I18n;
 import java.util.ResourceBundle;
+import org.apache.sling.api.SlingHttpServletRequest;
 
 /**
  *
@@ -24,7 +25,7 @@ import java.util.ResourceBundle;
  */
 public class I18nPlugin {
 
-    private boolean enableI18n;
+    private boolean enabled;
     private I18n i18n;
 
     /**
@@ -32,9 +33,9 @@ public class I18nPlugin {
      *
      * @param exposed
      */
-    public I18nPlugin(ExposedPlugin exposed) {
-        this.i18n = new I18n(exposed.getRequest());
-        this.enableI18n = (this.i18n != null);
+    public I18nPlugin(CorePlugin core) {        
+        this.i18n = new I18n(core.getRequest());
+        this.enabled = (this.i18n != null);
     }
 
     /**
@@ -42,17 +43,24 @@ public class I18nPlugin {
      *
      * @param enable
      */
-    public void enable(boolean enable) {
-        this.enableI18n = enable;
+    public void enable() {
+        this.enabled = true;
     }
 
+    /** 
+     * Marks plugin as disabled
+     */
+    public void disable() {
+        this.enabled = false;
+    }
+    
     /**
      * Checks if i18n is enabled
      *
      * @return
      */
     public boolean isEnabled() {
-        return this.enableI18n;
+        return this.enabled;
     }
 
     /**
@@ -64,6 +72,15 @@ public class I18nPlugin {
         this.i18n = new I18n(resourceBundle);
     }
 
+    /**
+     * Set i18n resource bundle; by default set to the Request
+     *
+     * @param request
+     */
+    public void setI18n(SlingHttpServletRequest request) {
+        this.i18n = new I18n(request);
+    }
+    
     /**
      * Translate the supplied string
      *

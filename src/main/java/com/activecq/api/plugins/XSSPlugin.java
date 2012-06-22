@@ -32,7 +32,7 @@ public class XSSPlugin {
     private ArrayList<String> whitelist;
     private XSSProtectionService service;
 
-    public XSSPlugin(ExposedPlugin exposed) {
+    public XSSPlugin(CorePlugin exposed) {
         this.service = exposed.getService(XSSProtectionService.class);
         this.whitelist = new ArrayList<String>();
         this.enabled = (service != null);
@@ -167,4 +167,5 @@ public class XSSPlugin {
     private XSSProtectionService getXSSProtectionService() {
         return this.service;
     }
+
 }

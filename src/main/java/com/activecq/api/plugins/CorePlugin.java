@@ -33,16 +33,15 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.api.scripting.SlingScriptHelper;
 
 /**
  *
  * @author david
  */
-public class ExposedPlugin extends ActiveComponent {
+public class CorePlugin extends ActiveComponent {
 
-    public ExposedPlugin(SlingScriptHelper slingScriptHelper) throws RepositoryException, LoginException {
-        super(slingScriptHelper, true);
+    public CorePlugin(SlingHttpServletRequest request) throws RepositoryException, LoginException {
+        super(request, true);
     }
 
     @Override
@@ -155,7 +154,8 @@ public class ExposedPlugin extends ActiveComponent {
         return super.getService(type);
     }
     
-    public ExposedPlugin getExposed() {
+    @Override
+    public CorePlugin getCore() {
         // Hide this method from public consumption
         return null;
     }

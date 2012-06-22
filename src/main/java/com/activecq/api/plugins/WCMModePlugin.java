@@ -26,8 +26,8 @@ public class WCMModePlugin {
 
     private WCMMode wcmMode;
 
-    public WCMModePlugin(ExposedPlugin exposed) {
-        this.wcmMode = WCMMode.fromRequest(exposed.getRequest());;
+    public WCMModePlugin(CorePlugin core) {
+        this.wcmMode = WCMMode.fromRequest(core.getRequest());;
     }
 
     public void switchTo(SlingHttpServletRequest request, WCMMode mode) {
