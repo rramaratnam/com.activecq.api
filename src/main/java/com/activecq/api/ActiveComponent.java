@@ -34,6 +34,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.*;
+import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,7 @@ public abstract class ActiveComponent {
     /* Resource Fields */
     private Page resourcePage;
     private Design resourcePageDesign;
+    private Resource designResource;
     
     /* Utility Fields */
     private Designer designer;
@@ -73,12 +75,29 @@ public abstract class ActiveComponent {
 
     /** Plug-ins */
     public class PluginsWrapper {
-        private ExposedPlugin Exposed;
+        private CorePlugin Core;
         public WCMModePlugin WCMMode;
         public XSSPlugin XSS;
         public I18nPlugin I18n;
+        public DiffPlugin Diff;
         public PersistencePlugin Persistence;
     };
+    
+    public enum Options {
+        NO_DIFF, RAW, NO_XSS, NO_I18N;
+        
+        public boolean isIn(Options... options) {
+            if(options == null) { return false; }
+            for(Options option : options) {
+                if(this.equals(option)) {
+                    return true;
+                }                
+            }
+            
+            return false;
+        } 
+    };
+    
     
     protected PluginsWrapper Plugins = new PluginsWrapper();
     
@@ -92,32 +111,40 @@ public abstract class ActiveComponent {
      * @throws RepositoryException
      * @throws LoginException
      */
-    public ActiveComponent(SlingScriptHelper slingScriptHelper)
+    public ActiveComponent(SlingHttpServletRequest request)
             throws RepositoryException, LoginException {
-        this(slingScriptHelper, false);            
+        this(request, false);            
     }
 
     /** 
-     * Used by ExposedPlugin. Used to prevent infinite recursive loading of Plugins.
+     * Used by CorePlugin. Used to prevent infinite recursive loading of Plugins.
      * @param slingScriptHelper
      * @param skipPlugins
      * @throws RepositoryException
      * @throws LoginException 
      */
-    protected ActiveComponent(SlingScriptHelper slingScriptHelper, boolean skipPlugins)
+    protected ActiveComponent(SlingHttpServletRequest request, boolean skipPlugins)
             throws RepositoryException, LoginException {
         
-        this.slingScriptHelper = slingScriptHelper;
+        // HTTP Request
+        this.request = request;
+        if (this.request == null) {
+            throw new IllegalArgumentException(
+                    "Sling HTTP Request must NOT be null.");
+        }
+        
+        // Get SlingScriptHelper from SlingBindings included as an attribute on the Sling HTTP Request 
+        SlingBindings slingBindings = (SlingBindings) this.request.getAttribute(SlingBindings.class.getName());
+        if(slingBindings == null) {
+            throw new IllegalArgumentException(
+                    "SlingHttpServletRequest most have contain a SlingBindings object at key: " + SlingBindings.class.getName());
+        }
+        
+        // Sling Script Helper
+        this.slingScriptHelper = slingBindings.getSling();
         if (this.slingScriptHelper == null) {
             throw new IllegalArgumentException(
                     "SlingScriptHelper must NOT be null.");
-        }
-
-        // HTTP Request
-        this.request = this.slingScriptHelper.getRequest();
-        if (this.request == null) {
-            throw new IllegalArgumentException(
-                    "SlingScriptHelper's Sling HTTP Request must NOT be null.");
         }
 
         // HTTP Response
@@ -133,20 +160,26 @@ public abstract class ActiveComponent {
             throw new IllegalArgumentException("Resource must NOT be null.");
         }
 
+        // CQ Component object
         this.component = WCMUtils.getComponent(resource);
         if (this.component == null) {
             throw new IllegalArgumentException(
                     "Resource must have a resourceType of a CQ Component.");
         }
 
+        // JCR Node
         this.node = WCMUtils.getNode(resource); 
         
+        // Initialize ActiveComponent Plugins as needed
         if(!skipPlugins) {
-            this.Plugins.Exposed = new ExposedPlugin(this.slingScriptHelper);
-            this.Plugins.Persistence = new PersistencePlugin(this.Plugins.Exposed);
-            this.Plugins.XSS = new XSSPlugin(this.Plugins.Exposed);
-            this.Plugins.WCMMode = new WCMModePlugin(this.Plugins.Exposed);
-            this.Plugins.I18n = new I18nPlugin(this.Plugins.Exposed);  
+            this.Plugins.Core = new CorePlugin(this.request);
+            /* General Helpers */
+            this.Plugins.Persistence = new PersistencePlugin(this.Plugins.Core);
+            this.Plugins.WCMMode = new WCMModePlugin(this.Plugins.Core);
+            /* Text manipulation */
+            this.Plugins.XSS = new XSSPlugin(this.Plugins.Core);
+            this.Plugins.I18n = new I18nPlugin(this.Plugins.Core); 
+            this.Plugins.Diff = new DiffPlugin(this.Plugins.Core);
         }
     }
         
@@ -154,10 +187,22 @@ public abstract class ActiveComponent {
      * Request & Response
      **************************************************************************/
     
+    
+    /** 
+     * Returns the Sling Request that initiated the request for this component
+     * 
+     * @return 
+     */
     protected SlingHttpServletRequest getRequest() {
         return this.request;
     }
 
+    /** 
+     * Returns the Sling Response that will be used to transport this component 
+     * rendition to the client
+     * 
+     * @return 
+     */
     protected SlingHttpServletResponse getResponse() {
         return this.response;
     }
@@ -264,6 +309,22 @@ public abstract class ActiveComponent {
     }
 
     /** 
+     * Get the resource's Design Resource
+     * 
+     * @return 
+     */
+    protected Resource getDesignResource() {
+        if(this.designResource == null) {
+            if(this.getStyle() != null) {
+                this.designResource = this.getResourceResolver().resolve(this.getStyle().getPath());
+            }
+        }
+        
+        return this.designResource;
+    }
+    
+    
+    /** 
      * Get a ValueMap of properties for the content Resource
      * 
      * @return 
@@ -283,8 +344,7 @@ public abstract class ActiveComponent {
      */
     protected ValueMap getDesignProperties() {
         if (this.designProperties == null) {
-            Resource styleResource = this.getResourceResolver().resolve(this.getStyle().getPath());
-            this.designProperties = ResourceUtil.getValueMap(styleResource);
+            this.designProperties = ResourceUtil.getValueMap(this.getDesignResource());
         }
 
         return this.designProperties;
@@ -463,7 +523,6 @@ public abstract class ActiveComponent {
         return this.queryBuilder;
     }
     
-    
     /***************************************************************************
      * OSGi Service Exposure Methods
      **************************************************************************/
@@ -484,62 +543,106 @@ public abstract class ActiveComponent {
                     "SlingScriptHelper is NULL");
         }
     }
-
     
     /***************************************************************************
      * Property Getter Methods
      **************************************************************************/
     // Resource (Dialog) Properties
-    public Object getProperty(Object key) {
-        return getPropertyGeneric(this.getProperties(), key);
-    }
-
     public <T> T getProperty(String key, Class<T> klass) {
-        return getPropertyGeneric(this.getProperties(), key, klass);
+        return  getProperty(key, klass, new Options[] {});
     }
 
-    public <T> T getProperty(String key, T defaultValue) {
-        return getPropertyGeneric(this.getProperties(), key, defaultValue);
-    }
-
-    public <T> T getFirstProperty(Class<T> klass, String... keys) {
-        return TextUtil.getFirstProperty(this.getProperties(), klass, keys);
-    }
-
-    // Design Dialog Properties
-    public Object getDesignProperty(Object key) {
-        return getPropertyGeneric(this.getDesignProperties(), key);
-    }
-
-    public <T> T getDesignProperty(String key, Class<T> klass) {
-        return getPropertyGeneric(this.getDesignProperties(), key, klass);
-    }
-
-    public <T> T getDesignProperty(String key, T defaultValue) {
-        return getPropertyGeneric(this.getDesignProperties(), key, defaultValue);
-    }
-
-    public <T> T getFirstDesignProperty(Class<T> klass, String... keys) {
-        return TextUtil.getFirstProperty(this.getDesignProperties(), klass, keys);
-    }
-
-    
-    /***************************************************************************
-     * Private: General Property Getter Methods
-     **************************************************************************/
-    private Object getPropertyGeneric(ValueMap valueMap, Object key) {
-        Object value = (Object) valueMap.get(key);
-
-        if (value instanceof String) {
-            value = (Object) this.Plugins.XSS.protect((String) value, (String) key);            
-            return (Object) this.Plugins.I18n.translate((String) value);
+    public <T> T getProperty(String key, Class<T> klass, Options... options) {
+        if(String.class.equals(klass)) {
+            final String current = (String) getPropertyGeneric(this.getResource(), key, klass, options);
+            return (T) this.getDiffText(this.getResource(), key, current, options);
         } else {
-            return value;
+            return getPropertyGeneric(this.getResource(), key, klass, options);            
         }
     }
 
+    public <T> T getProperty(String key, T defaultValue) {
+        return  getProperty(key, defaultValue, new Options[] {});
+    }    
+    
+    public <T> T getProperty(String key, T defaultValue, Options... options) {
+       if(defaultValue instanceof String) {
+            final String current = (String) getPropertyGeneric(this.getResource(), key, defaultValue, options);
+            return (T) this.getDiffText(this.getResource(), key, current, options);
+        } else {        
+            return getPropertyGeneric(this.getResource(), key, defaultValue, options);
+        }
+    }
+
+    
+    // Design Dialog Properties
+    public <T> T getDesignProperty(String key, Class<T> klass) {
+        return  getDesignProperty(key, klass, new Options[] {});
+    }
+    
+    public <T> T getDesignProperty(String key, Class<T> klass, Options... options) {
+        return getPropertyGeneric(this.getDesignResource(), key, klass, options);
+    }
+
+    public <T> T getDesignProperty(String key, T defaultValue) {
+        return  getDesignProperty(key, defaultValue, new Options[] {});
+    }    
+        
+    public <T> T getDesignProperty(String key, T defaultValue, Options... options) {
+        return getPropertyGeneric(this.getDesignResource(), key, defaultValue, options);
+    }
+
+
+    // Any Resource
+    public <T> T getProperty(Resource resource, String key, Class<T> klass) {
+        return getProperty(resource, key, klass, new Options[] {});
+    }
+    
+    public <T> T getProperty(Resource resource, String key, Class<T> klass, Options... options) {
+        if(resource == null) { return null; }
+        return getPropertyGeneric(resource, key, klass, options);
+    }
+
+    public <T> T getProperty(Resource resource, String key, T defaultValue) {
+        return getProperty(resource, key, defaultValue, new Options[] {});
+    }    
+    
+    public <T> T getProperty(Resource resource, String key, T defaultValue, Options... options) {
+        if(resource == null) { return null; }
+        return getPropertyGeneric(resource, key, defaultValue, options);
+    }
+  
+    
+    // Expose Diff Text functionality of Diff Plugin    
+    public String getDiffText(Resource resource, String key, String current, Options... options) {
+        if(this.Plugins.Diff.isEnabled()) {
+            
+            if(Options.RAW.isIn(options) || Options.NO_DIFF.isIn(options)) {
+                return current;
+            }
+            
+            if(current == null) {
+                current = this.Plugins.Diff.getCurrentText(resource, key, current);
+                current = this.process(current, options);
+            }
+        
+            String previous = this.Plugins.Diff.getPreviousText(resource, key);
+            previous = this.process(previous, key, options);
+
+            return this.Plugins.Diff.getDiff(resource, current, previous, 
+                    (TextUtil.isRichText(current) || TextUtil.isRichText(previous)));
+        } else {
+            return current;
+        }
+    }
+    
     @SuppressWarnings("unchecked")
-    private <T> T getPropertyGeneric(ValueMap valueMap, String key, Class<T> klass) {
+    private <T> T getPropertyGeneric(Resource resource, String key, Class<T> klass, Options... options) {
+        if(resource == null) { 
+            return null;
+        }
+        
+        final ValueMap valueMap = resource.adaptTo(ValueMap.class);
         if (valueMap == null || klass == null) {
             return null;
         }
@@ -553,8 +656,8 @@ public abstract class ActiveComponent {
         if (isString) {
             // Strip leading and trailing whitespace
             String strValue = StringUtils.strip((String) valueMap.get(key, klass));
-            strValue = this.Plugins.XSS.protect(strValue, key);            
-            strValue = this.Plugins.I18n.translate(strValue);            
+            strValue = this.process(strValue, key, options);
+                        
             return (T) strValue;            
         } else {
             return valueMap.get(key, klass);
@@ -562,7 +665,12 @@ public abstract class ActiveComponent {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getPropertyGeneric(ValueMap valueMap, String key, T defaultValue) {
+    private <T> T getPropertyGeneric(Resource resource, String key, T defaultValue, Options... options) {
+        if(resource == null) { 
+            return null;
+        }
+        
+        final ValueMap valueMap = resource.adaptTo(ValueMap.class);
         if (valueMap == null) {
             return defaultValue;
         }
@@ -579,15 +687,63 @@ public abstract class ActiveComponent {
         if (isString) {
             // Strip leading and trailing whitespace
             String strValue = StringUtils.strip((String) valueMap.get(key, defaultValue));
-            strValue = this.Plugins.XSS.protect(strValue, key);            
-            strValue = this.Plugins.I18n.translate(strValue);            
+            strValue = this.process(strValue, key, options);
             return (T) strValue;
         } else {
             return valueMap.get(key, defaultValue);
         }
     }
 
-    public ExposedPlugin getExposed() {
-        return this.Plugins.Exposed;
+    /** 
+     * Process text using the XSS and i18n Plugins
+     * 
+     * This method only looks to the Options param to determine which filters
+     * should be run. 
+     * 
+     * @param strValue
+     * @param options
+     * @return 
+     */
+    public String process(String strValue, Options... options) {
+        if(Options.RAW.isIn(options)) { return strValue; }
+ 
+        if(!Options.NO_XSS.isIn(options)) {
+            strValue = this.Plugins.XSS.protect(strValue);            
+        }
+        
+        if(!Options.NO_I18N.isIn(options)) {
+            strValue = this.Plugins.I18n.translate(strValue);                    
+        }
+        
+        return strValue;
+    }    
+    
+    /** 
+     * Process text using the XSS and i18n Plugins
+     * 
+     * This method only looks to the Options param and to any Plugin setup (key based) 
+     * to determine which filters should be run.
+     * 
+     * @param strValue
+     * @param key
+     * @param options
+     * @return 
+     */
+    public String process(String strValue, String key, Options... options) {
+        if(Options.RAW.isIn(options)) { return strValue; }
+        
+        if(!Options.NO_XSS.isIn(options)) {
+            strValue = this.Plugins.XSS.protect(strValue, key);            
+        }
+        
+        if(!Options.NO_I18N.isIn(options)) {
+            strValue = this.Plugins.I18n.translate(strValue);                 
+        }
+        
+        return strValue;
+    }
+    
+    public CorePlugin getCore() {
+        return this.Plugins.Core;
     }    
 }
