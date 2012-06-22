@@ -16,6 +16,8 @@
 package com.activecq.api.utils;
 
 import com.activecq.api.ActiveForm;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -146,4 +148,34 @@ public class TypeUtil {
             return klass.cast(data);
         }        
     }
+    
+    
+    public static String toString(Object obj, Class klass) {
+        return toString(obj, klass, null);
+    }
+    
+    public static String toString(Object obj, Class klass, String methodName) {
+        if(StringUtils.stripToNull(methodName) == null) {
+            methodName = "toString";
+        }
+        try {
+            Method method = klass.getMethod(methodName);
+            if(method == null) { return null; } // This should never happen, an exception would be thrown instead, but a fast check anyhow
+            
+            return (String) method.invoke(obj);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(TypeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(TypeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            Logger.getLogger(TypeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchMethodException ex) {
+            Logger.getLogger(TypeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            Logger.getLogger(TypeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return null;
+    }
+    
 }
