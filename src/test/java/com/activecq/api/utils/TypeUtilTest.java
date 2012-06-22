@@ -149,5 +149,34 @@ public class TypeUtilTest {
         System.out.println("toObjectType - String");
         String expResult = "Hello World";
         assertEquals(expResult, TypeUtil.toObjectType(expResult, String.class));
-    }    
+    }   
+    
+    @Test
+    public void toString_Double() {
+        System.out.println("toString - Double");
+        String expResult = "1000.0";
+        Double doubleValue = new Double(1000);
+        assertEquals(expResult, TypeUtil.toString(doubleValue, Double.class));        
+    }
+    
+    @Test
+    public void toString_Custom() {
+        System.out.println("toString - Custom Class");
+        String expResult = "Hello World!";
+        CustomToString custom = new CustomToString("Hello World");
+        assertEquals(expResult, TypeUtil.toString(custom, CustomToString.class, "giveMeAString"));        
+    }
+    
+    /* Custom method for testing */
+    private class CustomToString {
+        private String val;
+        public CustomToString(String val) {
+            this.val = val;
+        }
+        
+        public String giveMeAString() {
+            return this.val + "!";
+        }
+    }
+    
 }

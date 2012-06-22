@@ -17,6 +17,7 @@ package com.activecq.api.utils;
 
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -79,5 +80,35 @@ public class TextUtilTest {
         String expResult = "third";
         String result = TextUtil.getFirstNonEmpty(first, second, third, fourth);
         assertEquals(expResult, result);        
+    } 
+    
+    @Test 
+    public void testisRichText_PlainText() {
+        System.out.println("isRichText - PlainText");
+        
+        boolean expResult = false;
+        boolean result = TextUtil.isRichText("This is is not rich text");
+        assertEquals(expResult, result);        
+    } 
+    
+    @Test 
+    public void testisRichText_OpenCloseTag() {
+        System.out.println("isRichText - OpenCloseTag");
+        
+        boolean expResult = true;
+        boolean result = TextUtil.isRichText("<strong>This is strong text</strong>");
+        assertEquals(expResult, result);        
     }    
+    
+    
+    @Test
+    public void testIsEmpty_EmptyString() {
+        System.out.println("isEmpty - Empty String");
+        
+        boolean expResult = true;        
+        
+        assertEquals(expResult, TextUtil.isEmpty(""));          
+        assertEquals(expResult, TextUtil.isEmpty("  "));          
+        assertEquals(expResult, TextUtil.isEmpty(null));                  
+    }
 }
