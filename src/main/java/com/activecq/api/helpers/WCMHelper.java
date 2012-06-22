@@ -16,7 +16,7 @@
 package com.activecq.api.helpers;
 
 import com.activecq.api.ActiveComponent;
-import com.activecq.api.plugins.ExposedPlugin;
+import com.activecq.api.plugins.CorePlugin;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 

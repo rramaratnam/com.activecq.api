@@ -18,7 +18,7 @@ package com.activecq.api.helpers.impl;
 import com.activecq.api.ActiveComponent;
 import com.activecq.api.helpers.WCMEditType;
 import com.activecq.api.helpers.WCMHelper;
-import com.activecq.api.plugins.ExposedPlugin;
+import com.activecq.api.plugins.CorePlugin;
 import com.day.cq.wcm.api.WCMMode;
 import java.io.IOException;
 import java.util.Set;
@@ -147,25 +147,25 @@ public class WCMHelperImpl implements WCMHelper {
             return false;
         }
 
-        final ExposedPlugin exposed = activeComponent.getExposed();
+        final CorePlugin core = activeComponent.getCore();
         
-        String title = exposed.getComponent().getTitle();
+        String title = core.getComponent().getTitle();
         String html = "<div class=\"edit-mode\" style=\"min-width: 100px;\">";
 
         if (editType.equals(WCMEditType.NOICON) || editType.equals(WCMEditType.NONE)) {
             html += "<dl>";
             html += "<dt>" + title + "</dt>";
 
-            if (exposed.getComponent().getDialogPath() != null) {
+            if (core.getComponent().getDialogPath() != null) {
                 html += "<dd>Double click or Right click to Edit</dd>";
             }
 
-            if (exposed.getComponent().getDesignDialogPath() != null) {
+            if (core.getComponent().getDesignDialogPath() != null) {
                 html += "<dd>Switch to Design mode and click the Edit button</dd>";
             }
 
-            if (exposed.getComponent().getDialogPath() == null
-                    && exposed.getComponent().getDesignDialogPath() == null) {
+            if (core.getComponent().getDialogPath() == null
+                    && core.getComponent().getDesignDialogPath() == null) {
                 html += "<dd>The component cannot be edited</dd>";
             }
 
