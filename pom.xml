@@ -408,6 +408,19 @@
             <version>5.5.4</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.servlets.post</artifactId>
+            <version>2.1.0</version>
+            <type>jar</type>
+        </dependency>        
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>         
+        </dependency>
+                
     </dependencies>
             
     <!-- Avoid adding repositories directly to the pom.xml - Use settings.xml instead -->
