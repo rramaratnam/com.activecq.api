@@ -1,4 +1,6 @@
-This Maven Archetype expects:
+Visit the project's official web site at [activecq.com](http://activecq.com) for more information about the project.
 
-1) Adobe CQ to be running on localhost:4502
-2) The Archiva Servlet is installed on a Adobe CQ instance running on localhost:4502
+* Overview
+* Inspiration for the project
+* Code Samples
+* ...and more!
