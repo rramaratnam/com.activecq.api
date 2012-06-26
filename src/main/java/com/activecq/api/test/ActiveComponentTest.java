@@ -42,7 +42,9 @@ import org.junit.runner.RunWith;
 
 
 /**
- *
+ * Execute test from:
+ * http://localhost:5503/system/sling/junit/
+ * 
  * @author david
  */
 @RunWith(SlingAnnotationsTestRunner.class)
@@ -65,11 +67,13 @@ public class ActiveComponentTest {
     public final static class Constants {    
         public static final String COMPONENT_NAME = "active-component";
 
-        public static final String DESIGN_PATH = "/etc/designs/testing/activecq/active-component";
+        public static final String ROOT_DESIGN_PATH = "/etc/designs/testing";
+        public static final String ROOT_CONTENT_PATH = "/content/testing";        
+        
+        public static final String DESIGN_PATH = ROOT_DESIGN_PATH + "/activecq/active-component";
         public static final String DESIGN_RESOURCE_PATH = DESIGN_PATH + "/jcr:content/test-harness/par/test-1";    
-
-
-        public static final String CONTENT_PATH = "/content/testing/activecq";            
+                
+        public static final String CONTENT_PATH = ROOT_CONTENT_PATH + "/activecq";            
         public static final String CONTENT_PAGE_PATH = CONTENT_PATH + "/active-component";    
         public static final String CONTENT_RESOURCE_PATH = CONTENT_PAGE_PATH + "/jcr:content/par/test-1";            
         public static final String EXTRA_RESOURCE_PATH = CONTENT_PAGE_PATH + "/jcr:content/extra";    
@@ -93,7 +97,7 @@ public class ActiveComponentTest {
         // Content Resource Properties
         public static final String CONTENT_PLAIN_TEXT =  "This is plain text from the CQ Resource property";    
         public static final String CONTENT_RICH_TEXT =   "<p>This is <em>rich text</em> from the Content Resource property</p>";    
-        public static final double CONTENT_DOUBLE =      28894D;    
+        public static final double CONTENT_DOUBLE =      28894.24D;    
         public static final long CONTENT_LONG =          123339L;    
         public static final boolean CONTENT_BOOLEAN =    false;
         public static final String[] CONTENT_STR_ARRAY = new String[] {"Content Array Element 1", "Content Array Element 2"};
@@ -201,13 +205,13 @@ public class ActiveComponentTest {
     public void tearDown() throws Exception {
         resourceResolver = getResourceResolver();
         Session session =  resourceResolver.adaptTo(Session.class);
-        /*
-        session.getNode(DESIGN_PATH).remove();
+        
+        session.getNode(Constants.ROOT_DESIGN_PATH).remove();
         session.save();
 
-        session.getNode(CONTENT_PAGE_PATH).remove();
+        session.getNode(Constants.ROOT_CONTENT_PATH).remove();
         session.save();
-        */
+        
         if(resourceResolver != null) {
             resourceResolver.close();
         }
@@ -257,74 +261,62 @@ public class ActiveComponentTest {
     public void test_getNode() {
         executeTest("getNode");
     }     
-
     
     @Test
     public void test_getPageManager() {
         executeTest("getPageManager");
     } 
     
-    
     @Test
     public void test_getProperties() {
         executeTest("getProperties");
     } 
-    
-    
+        
     @Test
     public void test_getProperty() {
         executeTest("getProperty");
     } 
-    
-    
+        
     @Test
     public void test_getPropertyResource() {
         executeTest("getPropertyResource");
-    } 
-    
+    }     
         
     @Test
     public void test_getQueryBuilder() {
         executeTest("getQueryBuilder");
     } 
-        
-    
+            
     @Test
     public void test_getRequest() {
         executeTest("getRequest");
     } 
-    
-    
+        
     @Test
     public void test_getRequestDesign() {
         executeTest("getRequestDesign");
     } 
-    
-    
+        
     @Test
     public void test_getRequestPage() {
         executeTest("getRequestPage");
     } 
-    
-    
+        
     @Test
     public void test_getResource() {
         executeTest("getResource");
     } 
-    
-    
+        
     @Test
     public void test_getResourceDesign() {
         executeTest("getResourceDesign");
     } 
-    
-    
+        
     @Test
     public void test_getResourcePage() {
         executeTest("getResourcePage");
     } 
-    
-    
+        
     @Test
     public void test_getResourceResolver() {
         executeTest("getResourceResolver");
@@ -334,14 +326,12 @@ public class ActiveComponentTest {
     public void test_getReponse() {
         executeTest("getReponse");
     } 
-    
-    
+        
     @Test
     public void test_getService() {
         executeTest("getService");
     } 
-    
-    
+        
     @Test
     public void test_getStyle() {
         executeTest("getStyle");
@@ -351,8 +341,7 @@ public class ActiveComponentTest {
     public void test_hasNode() {
         executeTest("hasNode");
     } 
-   
-    
+       
     private HttpClient makeClient(String username, String password) {
         HttpClient client = new HttpClient();
         client.getState().setCredentials(AuthScope.ANY, 

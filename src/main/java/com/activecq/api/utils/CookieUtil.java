@@ -98,24 +98,27 @@ public class CookieUtil {
      * @param response
      * @param expiry 
      */
-    public void extendCookieLife(HttpServletRequest request, HttpServletResponse response, 
+    public static boolean extendCookieLife(HttpServletRequest request, HttpServletResponse response, 
             String cookieName, int expiry) {
         Cookie cookie = getCookie(request, cookieName);
-        if(cookie == null) { return; }
+        if(cookie == null) { return false; }
         
         if (cookie.getMaxAge() <= 0) {
-            return;
+            return false;
         }
         
         cookie.setMaxAge(expiry);
         cookie.setPath(cookie.getPath());
         
         addCookie(cookie, response);
+        
+        return true;
     }
         
     
-    public static void dropCookies(HttpServletRequest request, HttpServletResponse response, String... cookieNames) {
-        if(cookieNames == null) { return; }
+    public static int dropCookies(HttpServletRequest request, HttpServletResponse response, String... cookieNames) {
+        int count = 0;
+        if(cookieNames == null) { return count; }
         
         for(final String cookieName : cookieNames) {
             Cookie cookie = getCookie(request, cookieName);
@@ -125,15 +128,19 @@ public class CookieUtil {
             cookie.setPath(cookie.getPath());
             
             addCookie(cookie, response);
+            count++;
         }
+        
+        return count;
     }
 
-    public static void dropCookiesByRegex(HttpServletRequest request, HttpServletResponse response, String... regexes) {
-        dropCookiesByRegexArray(request, response, regexes);
+    public static int dropCookiesByRegex(HttpServletRequest request, HttpServletResponse response, String... regexes) {
+        return dropCookiesByRegexArray(request, response, regexes);
     }
     
-    public static void dropCookiesByRegexArray(HttpServletRequest request, HttpServletResponse response, String[] regexes) {
-        if(regexes == null) { return; }
+    public static int dropCookiesByRegexArray(HttpServletRequest request, HttpServletResponse response, String[] regexes) {
+        int count = 0;
+        if(regexes == null) { return count; }
         List<Cookie> cookies = new ArrayList<Cookie>();
         
         for(final String regex : regexes) {
@@ -148,7 +155,10 @@ public class CookieUtil {
             cookie.setPath(cookie.getPath());
             
             addCookie(cookie, response);
+            count++;
         }
+        
+        return count++;
     }    
     
     
@@ -158,16 +168,20 @@ public class CookieUtil {
      * @param request
      * @param response 
      */
-    public static void dropAllCookies(HttpServletRequest request, HttpServletResponse response) {
+    public static int dropAllCookies(HttpServletRequest request, HttpServletResponse response) {
+        int count = 0;
         Cookie[] cookies = request.getCookies();
         
-        if(cookies == null) { return; }
+        if(cookies == null) { return 0; }
         
         for (Cookie cookie : cookies) {
             cookie.setMaxAge(0);
             cookie.setPath(cookie.getPath());
      
             addCookie(cookie, response);
+            count++;
         }
+        
+        return count;
     }    
 }

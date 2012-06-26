@@ -26,6 +26,6 @@ import org.osgi.service.event.Event;
 public class EventsUtil {
     public static Resource getEventResource(Event event, ResourceResolver resourceResolver) {
         String resourcePath = (String) event.getProperty("path");
-        return resourceResolver.resolve(resourcePath);    
+        return resourceResolver.getResource(resourcePath);    
     }
 }

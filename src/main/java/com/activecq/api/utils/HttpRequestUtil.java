@@ -38,7 +38,7 @@ public class HttpRequestUtil {
         if(hasParameter(request, key)) {
             value = request.getParameter(key);
         } else if (hasAttribute(request, key)) {
-            value = (String) request.getAttribute(value);
+            value = (String) request.getAttribute(key);
         }
         
         if(StringUtils.stripToNull(value) == null) {
@@ -55,9 +55,9 @@ public class HttpRequestUtil {
     public static String getAttributeOrParameter(HttpServletRequest request,String key, String dfault) {
         String value = null;
         if(request == null) { return value; }
-        
+                
         if (hasAttribute(request, key)) {
-            value = (String) request.getAttribute(value);
+            value = (String) request.getAttribute(key);
         } else if(hasParameter(request, key)) {
             value = request.getParameter(key);
         }
