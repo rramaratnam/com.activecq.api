@@ -16,7 +16,6 @@
 package com.activecq.api.helpers;
 
 public enum WCMEditType {
-
     CHART,
     IMAGE,
     VIDEO,
