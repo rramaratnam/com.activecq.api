@@ -104,10 +104,7 @@ public class RemoteTester {
     public void execute(String testName, int expStatus, String regex, String queryParams) {
         HttpClient client = getClient();
         HttpMethod method = getMethod(testName, "html", queryParams);
-        
-        System.out.println(">>> " + method.getPath());
-        System.out.println(">>>>>> " + method.getQueryString());
-        
+                
         try {
             int status = client.executeMethod(method);
             final String response = method.getResponseBodyAsString();
