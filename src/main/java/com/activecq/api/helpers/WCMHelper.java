@@ -38,6 +38,6 @@ public interface WCMHelper {
     public boolean isPublish();
 
     public boolean printEditBlock(SlingScriptHelper sling,
-            ActiveComponent activeComponent, WCMEditType editType,
+            WCMEditType editType,
             boolean... conditions);
 }
