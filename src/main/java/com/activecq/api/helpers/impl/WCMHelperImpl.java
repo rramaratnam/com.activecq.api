@@ -149,8 +149,7 @@ public class WCMHelperImpl implements WCMHelper {
         final com.day.cq.wcm.api.components.Component component = WCMUtils.getComponent(resource);
         final String title = component.getTitle();
             
-        if (!isEditMode(request)
-                && !isDesignMode(request)
+        if (!isAuthoringMode(request)
                 && conditionAndCheck(conditions)) {
             return false;
         }
@@ -195,9 +194,6 @@ public class WCMHelperImpl implements WCMHelper {
 
         return true;
     }
-    
-    
-   
 
     private boolean conditionAndCheck(boolean... conditions) {
         if (conditions == null) {
@@ -219,4 +215,5 @@ public class WCMHelperImpl implements WCMHelper {
 
     protected void deactivate(ComponentContext componentContext) {
     }
+
 }
