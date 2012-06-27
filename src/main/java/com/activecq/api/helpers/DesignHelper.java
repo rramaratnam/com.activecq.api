@@ -19,7 +19,6 @@ import com.day.cq.wcm.api.Page;
 import java.util.Map;
 
 public interface DesignHelper {
-
     public String cssTag(String path, Page page);
 
     public String cssTag(String path, Page page, String media);
