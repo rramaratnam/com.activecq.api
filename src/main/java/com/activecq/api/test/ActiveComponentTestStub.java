@@ -39,23 +39,9 @@ import org.apache.sling.api.resource.ValueMap;
  * @author david
  */
 public class ActiveComponentTestStub extends ActiveComponent {
+
     public ActiveComponentTestStub(SlingHttpServletRequest request) throws RepositoryException, LoginException {
         super(request);
-    }    
-    
-    @Override
-    public SlingHttpServletRequest getRequest() {
-        return super.getRequest();
-    }
-
-    @Override
-    public SlingHttpServletResponse getResponse() {
-        return super.getResponse();
-    }
-
-    @Override
-    public Resource getResource() {
-        return super.getResource();
     }
 
     @Override
@@ -64,58 +50,8 @@ public class ActiveComponentTestStub extends ActiveComponent {
     }
 
     @Override
-    public boolean hasNode() {
-        return super.hasNode();
-    }
-
-    @Override
-    public Node getNode() {
-        return super.getNode();
-    }
-
-    @Override
     public ComponentContext getComponentContext() {
         return super.getComponentContext();
-    }
-
-    @Override
-    public EditContext getEditContext() {
-        return super.getEditContext();
-    }
-
-    @Override
-    public Style getStyle() {
-        return super.getStyle();
-    }
-
-    @Override
-    public Resource getDesignResource() {
-        return super.getDesignResource();
-    }    
-    
-    @Override
-    public ValueMap getProperties() {
-        return super.getProperties();
-    }
-
-    @Override
-    public ValueMap getDesignProperties() {
-        return super.getDesignProperties();
-    }
-
-    @Override
-    public Page getRequestPage() {
-        return super.getRequestPage();
-    }
-
-    @Override
-    public Page getPage() {
-        return super.getPage();
-    }
-
-    @Override
-    public Design getRequestDesign() {
-        return super.getRequestDesign();
     }
 
     @Override
@@ -124,13 +60,8 @@ public class ActiveComponentTestStub extends ActiveComponent {
     }
 
     @Override
-    public Page getResourcePage() {
-        return super.getResourcePage();
-    }
-
-    @Override
-    public Design getResourceDesign() {
-        return super.getResourceDesign();
+    public ValueMap getDesignProperties() {
+        return super.getDesignProperties();
     }
 
     @Override
@@ -139,8 +70,93 @@ public class ActiveComponentTestStub extends ActiveComponent {
     }
 
     @Override
+    public EditContext getEditContext() {
+        return super.getEditContext();
+    }
+
+    @Override
+    public Node getNode() {
+        return super.getNode();
+    }
+
+    @Override
+    public Page getPage() {
+        return super.getPage();
+    }
+
+    @Override
     public PageManager getPageManager() {
         return super.getPageManager();
+    }
+
+    @Override
+    public ValueMap getPageProperties() {
+        return super.getPageProperties();
+    }
+
+    @Override
+    public ValueMap getProperties() {
+        return super.getProperties();
+    }
+
+    @Override
+    public QueryBuilder getQueryBuilder() {
+        return super.getQueryBuilder();
+    }
+
+    @Override
+    public SlingHttpServletRequest getRequest() {
+        return super.getRequest();
+    }
+
+    @Override
+    public Design getRequestDesign() {
+        return super.getRequestDesign();
+    }
+
+    @Override
+    public ValueMap getRequestDesignProperties() {
+        return super.getRequestDesignProperties();
+    }
+
+    @Override
+    public Page getRequestPage() {
+        return super.getRequestPage();
+    }
+
+    @Override
+    public ValueMap getRequestPageProperties() {
+        return super.getRequestPageProperties();
+    }
+
+    @Override
+    public Style getRequestStyle() {
+        return super.getRequestStyle();
+    }
+
+    @Override
+    public Resource getResource() {
+        return super.getResource();
+    }
+
+    @Override
+    public Design getResourceDesign() {
+        return super.getResourceDesign();
+    }
+
+    @Override
+    public ValueMap getResourceDesignProperties() {
+        return super.getResourceDesignProperties();
+    }
+
+    @Override
+    public Page getResourcePage() {
+        return super.getResourcePage();
+    }
+
+    @Override
+    public ValueMap getResourcePageProperties() {
+        return super.getResourcePageProperties();
     }
 
     @Override
@@ -149,13 +165,27 @@ public class ActiveComponentTestStub extends ActiveComponent {
     }
 
     @Override
-    public QueryBuilder getQueryBuilder() {
-        return super.getQueryBuilder();
+    public Style getResourceStyle() {
+        return super.getResourceStyle();
     }
-    
+
+    @Override
+    public SlingHttpServletResponse getResponse() {
+        return super.getResponse();
+    }
+
     @Override
     public <ServiceType> ServiceType getService(Class<ServiceType> type) {
         return super.getService(type);
     }
-    
+
+    @Override
+    public Style getStyle() {
+        return super.getStyle();
+    }
+
+    @Override
+    public boolean hasNode() {
+        return super.hasNode();
+    }
 }
