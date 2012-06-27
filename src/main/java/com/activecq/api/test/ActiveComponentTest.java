@@ -15,19 +15,16 @@
  */
 package com.activecq.api.test;
 
+import com.activecq.api.testing.AbstractRemoteTest;
 import com.activecq.api.testing.RemoteTester;
 import com.day.cq.commons.jcr.JcrUtil;
 import javax.jcr.Node;
 import javax.jcr.Session;
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.junit.annotations.SlingAnnotationsTestRunner;
 import org.apache.sling.junit.annotations.TestReference;
 import org.junit.After;
-import static org.junit.Assert.fail;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,12 +34,10 @@ import org.junit.runner.RunWith;
  * @author david
  */
 @RunWith(SlingAnnotationsTestRunner.class)
-public class ActiveComponentTest {
+public class ActiveComponentTest extends AbstractRemoteTest {
 
     @TestReference
     private ResourceResolverFactory resourceResolverFactory;
-    private ResourceResolver resourceResolver;
-    private static RemoteTester remote;
 
     public final static class Constants {
 
@@ -88,15 +83,17 @@ public class ActiveComponentTest {
     public ActiveComponentTest() {
     }
 
-    @BeforeClass
-    public static void setupClass() {
-        remote = new RemoteTester("admin", "admin", "http://localhost:5502" + Constants.CONTENT_PAGE_PATH, "GET");
-    }
-
     @Before
     public void setUp() throws Exception {
-        resourceResolver = getResourceResolver();
-        Session session = resourceResolver.adaptTo(Session.class);
+        super.setUp(resourceResolverFactory);
+        
+        setRemoteTester(new RemoteTester(
+                "admin", 
+                "admin", 
+                "http://localhost:5502" + Constants.CONTENT_PAGE_PATH, 
+                "GET"));
+
+        Session session = getSession();
 
         Node node = null;
         
@@ -168,19 +165,12 @@ public class ActiveComponentTest {
 
     @After
     public void tearDown() throws Exception {
-        resourceResolver = getResourceResolver();
-        Session session = resourceResolver.adaptTo(Session.class);
-
-        session.getNode(Constants.ROOT_DESIGN_PATH).remove();
-        session.save();
-
-        session.getNode(Constants.ROOT_CONTENT_PATH).remove();
-        session.save();
-
-        if (resourceResolver != null) {
-            resourceResolver.close();
-            resourceResolver = null;
-        }
+        removeNodes(getResourceResolver(), 
+                Constants.ROOT_DESIGN_PATH,
+                Constants.ROOT_CONTENT_PATH
+                );
+        
+        super.tearDown();
     }
 
     /** REMOTE TEST **/
@@ -211,11 +201,6 @@ public class ActiveComponentTest {
     }
 
     @Test
-    public void test_getDesignResource() {
-        remote.execute("getDesignResource");
-    }
-
-    @Test
     public void test_getDesigner() {
         remote.execute("getDesigner");
     }
@@ -231,10 +216,20 @@ public class ActiveComponentTest {
     }
 
     @Test
+    public void test_getPage() {
+        remote.execute("getPage");
+    }    
+    
+    @Test
     public void test_getPageManager() {
         remote.execute("getPageManager");
     }
 
+    @Test
+    public void test_getPageProperties() {
+        remote.execute("getPageProperties");
+    }
+        
     @Test
     public void test_getProperties() {
         remote.execute("getProperties");
@@ -246,7 +241,7 @@ public class ActiveComponentTest {
     }
 
     @Test
-    public void test_getPropertyResource() {
+    public void test_getProperty_Resource() {
         remote.execute("getPropertyResource");
     }
 
@@ -266,10 +261,25 @@ public class ActiveComponentTest {
     }
 
     @Test
+    public void test_getRequestDesignProperties() {
+        remote.execute("getRequestDesignProperties");
+    }
+    
+    @Test
     public void test_getRequestPage() {
         remote.execute("getRequestPage");
     }
 
+    @Test
+    public void test_getRequestPageProperties() {
+        remote.execute("getRequestPageProperties");
+    }    
+
+    @Test
+    public void test_getRequestStyle() {
+        remote.execute("getRequestStyle");
+    }    
+    
     @Test
     public void test_getResource() {
         remote.execute("getResource");
@@ -281,14 +291,29 @@ public class ActiveComponentTest {
     }
 
     @Test
+    public void test_getResourceDesignProperties() {
+        remote.execute("getResourceDesignProperties");
+    }    
+    
+    @Test
     public void test_getResourcePage() {
         remote.execute("getResourcePage");
     }
 
     @Test
+    public void test_getResourcePageProperties() {
+        remote.execute("getResourcePageProperties");
+    }    
+    
+    @Test
     public void test_getResourceResolver() {
         remote.execute("getResourceResolver");
     }
+    
+    @Test
+    public void test_getResourceStyle() {
+        remote.execute("getResourceStyle");
+    }    
 
     @Test
     public void test_getReponse() {
@@ -308,20 +333,5 @@ public class ActiveComponentTest {
     @Test
     public void test_hasNode() {
         remote.execute("hasNode");
-    }
-
-    /**
-     * Private Method *
-     */
-    private ResourceResolver getResourceResolver() {
-        try {
-            if (resourceResolver == null) {
-                resourceResolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
-            }
-            return resourceResolver;
-        } catch (LoginException e) {
-            fail(e.toString());
-        }
-        return null;
     }
 }
