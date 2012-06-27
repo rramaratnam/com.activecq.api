@@ -20,11 +20,13 @@ import com.activecq.api.helpers.WCMEditType;
 import com.activecq.api.helpers.WCMHelper;
 import com.activecq.api.plugins.CorePlugin;
 import com.day.cq.wcm.api.WCMMode;
+import com.day.cq.wcm.commons.WCMUtils;
 import java.io.IOException;
 import java.util.Set;
 import org.apache.felix.scr.annotations.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.service.component.ComponentContext;
@@ -134,38 +136,43 @@ public class WCMHelperImpl implements WCMHelper {
     /**
      * 
      */
+    
+
+    
     public boolean printEditBlock(SlingScriptHelper sling,
-            ActiveComponent activeComponent, WCMEditType editType,
+            WCMEditType editType,
             boolean... conditions) {
 
-        SlingHttpServletRequest request = sling.getRequest();
-        SlingHttpServletResponse response = sling.getResponse();
-
+        final SlingHttpServletRequest request = sling.getRequest();
+        final SlingHttpServletResponse response = sling.getResponse();
+        final Resource resource = sling.getRequest().getResource();
+        final com.day.cq.wcm.api.components.Component component = WCMUtils.getComponent(resource);
+        final String title = component.getTitle();
+            
         if (!isEditMode(request)
                 && !isDesignMode(request)
                 && conditionAndCheck(conditions)) {
             return false;
         }
-
-        final CorePlugin core = activeComponent.getCore();
         
-        String title = core.getComponent().getTitle();
         String html = "<div class=\"edit-mode\" style=\"min-width: 100px;\">";
 
-        if (editType.equals(WCMEditType.NOICON) || editType.equals(WCMEditType.NONE)) {
+        if(component == null) {
+            html += "Could not resolve CQ Component type.";
+        } else if (editType.equals(WCMEditType.NOICON) || editType.equals(WCMEditType.NONE)) {
             html += "<dl>";
             html += "<dt>" + title + "</dt>";
 
-            if (core.getComponent().getDialogPath() != null) {
+            if (component.getDialogPath() != null) {
                 html += "<dd>Double click or Right click to Edit</dd>";
             }
 
-            if (core.getComponent().getDesignDialogPath() != null) {
+            if (component.getDesignDialogPath() != null) {
                 html += "<dd>Switch to Design mode and click the Edit button</dd>";
             }
 
-            if (core.getComponent().getDialogPath() == null
-                    && core.getComponent().getDesignDialogPath() == null) {
+            if (component.getDialogPath() == null
+                    && component.getDesignDialogPath() == null) {
                 html += "<dd>The component cannot be edited</dd>";
             }
 
@@ -188,6 +195,9 @@ public class WCMHelperImpl implements WCMHelper {
 
         return true;
     }
+    
+    
+   
 
     private boolean conditionAndCheck(boolean... conditions) {
         if (conditions == null) {
