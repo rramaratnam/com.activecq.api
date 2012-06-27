@@ -1,7 +1,7 @@
 {
     "jcr:primaryType": "cq:Component",
-    "jcr:title": "Test - ActiveComponent",
-    "jcr:description": "Test Component for ActiveComponent",
+    "jcr:title": "Test - WCMHelper",
+    "jcr:description": "Test Component for WCMHelper",
     
     "componentGroup": ".hidden",
     "cq:noDecoration": true
