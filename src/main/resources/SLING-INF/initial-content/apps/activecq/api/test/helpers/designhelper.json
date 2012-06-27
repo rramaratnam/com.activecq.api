@@ -1,0 +1,8 @@
+{
+    "jcr:primaryType": "cq:Component",
+    "jcr:title": "Test - DesignHelper",
+    "jcr:description": "Test Component for DesignHelper",
+    
+    "componentGroup": ".hidden",
+    "cq:noDecoration": true
+}
