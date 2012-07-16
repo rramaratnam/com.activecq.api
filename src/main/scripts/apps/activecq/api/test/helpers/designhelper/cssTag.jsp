@@ -1,8 +1,5 @@
 <%@page session="false" 
-        import="com.activecq.api.helpers.DesignHelper,
-                org.apache.commons.lang.StringUtils,
-                java.util.*,
-                java.lang.*"
+        import="com.activecq.api.helpers.DesignHelper"
 %><%@include file="/apps/activecq/global/global.jsp" %><%
 /** Begin Helper Setup **/
 DesignHelper helper = sling.getService(DesignHelper.class); 
@@ -10,5 +7,9 @@ DesignHelper helper = sling.getService(DesignHelper.class);
 %>
 
 <!-- Begin Test -->
-    <%= helper.cssTag("test", currentPage) %>
+    <%= helper.cssTag("does-not-exist", currentPage) %>
+<!-- End Test -->
+
+<!-- Begin Test -->
+    <%= helper.cssTag("exists", currentPage) %>
 <!-- End Test -->

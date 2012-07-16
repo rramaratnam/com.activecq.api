@@ -30,6 +30,7 @@ import com.day.cq.wcm.api.designer.Style;
 import com.day.cq.wcm.commons.WCMUtils;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.servlet.jsp.PageContext;
 import org.apache.commons.lang.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -39,11 +40,11 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class ActiveComponent {
+public abstract class ActiveComponent implements ActivePresenter {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(ActiveComponent.class);
-    
+        
     /*
      * Universal Fields
      */
@@ -87,7 +88,6 @@ public abstract class ActiveComponent {
      * Plug-ins
      */
     public class PluginsWrapper {
-        private CorePlugin Core;
         public WCMModePlugin WCMMode;
         public XSSPlugin XSS;
         public I18nPlugin I18n;
@@ -114,41 +114,24 @@ public abstract class ActiveComponent {
     
     protected PluginsWrapper Plugins = new PluginsWrapper();
 
-    /*
-     * Page Fields
-     */
     /**
-     * Initialize an ActiveComponent class. Constructor performs tests on input
-     * Resource to ensure it can be adapted to the necessary objects.
-     *
-     * @param slingScriptHelper
-     * @throws RepositoryException
-     * @throws LoginException
-     */
-    public ActiveComponent(SlingHttpServletRequest request)
-            throws RepositoryException, LoginException {
-        this(request, false);
-    }
-
-    /**
-     * Used by CorePlugin. Used to prevent infinite recursive loading of
-     * Plugins.
+     * Constructor used in conjunction with JSTL/EL
      *
      * @param slingScriptHelper
      * @param skipPlugins
      * @throws RepositoryException
      * @throws LoginException
      */
-    protected ActiveComponent(SlingHttpServletRequest request, boolean skipPlugins)
+    protected ActiveComponent(SlingHttpServletRequest request)
             throws RepositoryException, LoginException {
-
+        
         // HTTP Request
         this.request = request;
         if (this.request == null) {
             throw new IllegalArgumentException(
                     "Sling HTTP Request must NOT be null.");
         }
-
+        
         // Get SlingScriptHelper from SlingBindings included as an attribute on the Sling HTTP Request 
         SlingBindings slingBindings = (SlingBindings) this.request.getAttribute(SlingBindings.class.getName());
         if (slingBindings == null) {
@@ -186,23 +169,21 @@ public abstract class ActiveComponent {
         // JCR Node
         this.node = WCMUtils.getNode(this.resource);
 
-        // Initialize ActiveComponent Plugins as needed
-        if (!skipPlugins) {
-            this.Plugins.Core = new CorePlugin(this.request);
-            /*
-             * General Helpers
-             */
-            this.Plugins.Persistence = new PersistencePlugin(this.Plugins.Core);
-            this.Plugins.WCMMode = new WCMModePlugin(this.Plugins.Core);
-            /*
-             * Text manipulation
-             */
-            this.Plugins.XSS = new XSSPlugin(this.Plugins.Core);
-            this.Plugins.I18n = new I18nPlugin(this.Plugins.Core);
-            this.Plugins.Diff = new DiffPlugin(this.Plugins.Core);
-        }
+        // Initialize Plugins
+        /*
+        * General Helpers
+        */
+        this.Plugins.Persistence = new PersistencePlugin(this.request);
+        this.Plugins.WCMMode = new WCMModePlugin(this.request);
+        /*
+        * Text manipulation
+        */
+        this.Plugins.XSS = new XSSPlugin(this.request);
+        this.Plugins.I18n = new I18nPlugin(this.request);
+        this.Plugins.Diff = new DiffPlugin(this.request);              
     }
-
+    
+    
     /**
      * *************************************************************************
      * Request & Response
@@ -352,7 +333,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected Page getPage() {
         return this.getRequestPage();
     }
@@ -364,7 +344,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected Design getRequestDesign() {
         if (this.requestDesign == null) {
             if (this.getDesigner() != null) {
@@ -384,7 +363,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected Design getDesign() {
         return this.getRequestDesign();
     }
@@ -394,7 +372,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected ValueMap getRequestPageProperties() {
         if (this.requestPageProperties == null) {
             if (this.getRequestPage() != null) {
@@ -419,7 +396,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected ValueMap getResourcePageProperties() {
         if (this.resourcePageProperties == null) {
             if (this.getResourcePage() != null) {
@@ -486,7 +462,6 @@ public abstract class ActiveComponent {
      *
      * @return
      */
-    // OK
     protected Page getResourcePage() {
         if (this.resourcePage == null) {
             if (this.getPageManager() != null) {
@@ -633,7 +608,6 @@ public abstract class ActiveComponent {
      * @param type
      * @return the requested service or null.
      */
-    // OK
     protected <ServiceType> ServiceType getService(Class<ServiceType> type) {
         if (this.slingScriptHelper != null) {
             return slingScriptHelper.getService(type);
@@ -856,8 +830,10 @@ public abstract class ActiveComponent {
 
         return strValue;
     }
-
-    public CorePlugin getCore() {
-        return this.Plugins.Core;
-    }
+    
+    /**
+     * 
+     * @return 
+     */
+    public abstract ActiveModel getModel();
 }

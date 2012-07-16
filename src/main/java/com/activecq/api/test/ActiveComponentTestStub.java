@@ -27,6 +27,7 @@ import com.day.cq.wcm.api.designer.Designer;
 import com.day.cq.wcm.api.designer.Style;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.servlet.jsp.PageContext;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.LoginException;
@@ -43,7 +44,7 @@ public class ActiveComponentTestStub extends ActiveComponent {
     public ActiveComponentTestStub(SlingHttpServletRequest request) throws RepositoryException, LoginException {
         super(request);
     }
-
+    
     @Override
     public Component getComponent() {
         return super.getComponent();

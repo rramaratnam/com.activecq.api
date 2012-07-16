@@ -15,11 +15,14 @@
  */
 package com.activecq.api.test;
 
-import com.activecq.api.testing.AbstractRemoteTest;
+import com.activecq.api.testing.AbstractRemoteTemplate;
 import com.activecq.api.testing.RemoteTester;
+import com.activecq.api.testing.nodegenerators.ComponentGenerator;
+import com.activecq.api.testing.nodegenerators.DesignGenerator;
+import com.activecq.api.testing.nodegenerators.PageGenerator;
 import com.day.cq.commons.jcr.JcrUtil;
 import javax.jcr.Node;
-import javax.jcr.Session;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.junit.annotations.SlingAnnotationsTestRunner;
 import org.apache.sling.junit.annotations.TestReference;
@@ -34,22 +37,24 @@ import org.junit.runner.RunWith;
  * @author david
  */
 @RunWith(SlingAnnotationsTestRunner.class)
-public class ActiveComponentTest extends AbstractRemoteTest {
+public class ActiveComponentTest extends AbstractRemoteTemplate {
 
+    private ComponentGenerator component;
+    private DesignGenerator design;
+    private PageGenerator page;    
+    
+    private String stylePath = "";
+    private String testResourcePath = "";
+    private String extraResourcePath = Constants.EXTRA_RESOURCE_PATH;
+    
+    
     @TestReference
     private ResourceResolverFactory resourceResolverFactory;
 
     public final static class Constants {
+        public static final String COMPONENT_NAME = "active-component";        
+        public static final String EXTRA_RESOURCE_PATH = "/content/test/page/jcr:content/par/extra";
 
-        public static final String COMPONENT_NAME = "active-component";
-        public static final String ROOT_DESIGN_PATH = "/etc/designs/testing";
-        public static final String ROOT_CONTENT_PATH = "/content/testing";
-        public static final String DESIGN_PATH = ROOT_DESIGN_PATH + "/activecq/active-component";
-        public static final String DESIGN_RESOURCE_PATH = DESIGN_PATH + "/jcr:content/test-harness/par/test-1";
-        public static final String CONTENT_PATH = ROOT_CONTENT_PATH + "/activecq";
-        public static final String CONTENT_PAGE_PATH = CONTENT_PATH + "/active-component";
-        public static final String CONTENT_RESOURCE_PATH = CONTENT_PAGE_PATH + "/jcr:content/par/test-1";
-        public static final String EXTRA_RESOURCE_PATH = CONTENT_PAGE_PATH + "/jcr:content/extra";
         // Resource Property Names
         public static final String PROPERTY_PLAIN_TEXT = "plain-text";
         public static final String PROPERTY_RICH_TEXT = "rich-text";
@@ -84,254 +89,288 @@ public class ActiveComponentTest extends AbstractRemoteTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws Exception {        
         super.setUp(resourceResolverFactory);
         
-        setRemoteTester(new RemoteTester(
-                "admin", 
-                "admin", 
-                "http://localhost:5502" + Constants.CONTENT_PAGE_PATH, 
-                "GET"));
-
-        Session session = getSession();
-
-        Node node = null;
+        Node node;
         
-        /** DESIGN NODES **/
+        component = new ComponentGenerator(getSession(), "activecq/api/test/active-component");
+        design = new DesignGenerator(getSession());
+        page = new PageGenerator("activecq/components/templates/test-harness", design.getPath(), getSession());
         
-        // Etc Design Nodes
-        JcrUtil.createPath(Constants.DESIGN_PATH, "cq:Page", session);
-        session.save();
-
-        // Design PageContent Node
-        node = JcrUtil.createPath(Constants.DESIGN_PATH.concat("/jcr:content"), "nt:unstructured", session);
-        node.setProperty("sling:resourceType", "wcm/core/components/designer");
-        node.setProperty("jcr:title", "Active Component Design for Testing");
-        node.setProperty("cq:doctype", "html5");
-        session.save();
-
-        // Component Design Properties
-        node = JcrUtil.createPath(Constants.DESIGN_RESOURCE_PATH, "nt:unstructured", session);
-        node.setProperty("sling:resourceType", "activecq/api/test/activecomponent");
+        System.out.println("page: " + page.getPath());
+        
+        node = design.buildContentResource(getSession(), component.getName(), component.getResourceType());
         node.setProperty(Constants.PROPERTY_PLAIN_TEXT, Constants.DESIGN_PLAIN_TEXT);
         node.setProperty(Constants.PROPERTY_RICH_TEXT, Constants.DESIGN_RICH_TEXT);
         node.setProperty(Constants.PROPERTY_DOUBLE, Constants.DESIGN_DOUBLE);
         node.setProperty(Constants.PROPERTY_LONG, Constants.DESIGN_LONG);
         node.setProperty(Constants.PROPERTY_STR_ARRAY, Constants.DESIGN_STR_ARRAY);
         node.setProperty(Constants.PROPERTY_BOOLEAN, Constants.DESIGN_BOOLEAN);
-        session.save();
-
-        /** CONTENT NODES **/
-        
-        // Page
-        JcrUtil.createPath(Constants.CONTENT_PATH, "nt:folder", session);
-        session.save();
-
-        JcrUtil.createPath(Constants.CONTENT_PAGE_PATH, "cq:Page", session);
-        session.save();
-
-        // Page Content
-        node = JcrUtil.createPath(Constants.CONTENT_PAGE_PATH + "/jcr:content", "cq:PageContent", session);
-        node.setProperty("sling:resourceType", "activecq/components/templates/test-harness");
-        node.setProperty("cq:designPath", Constants.DESIGN_PATH);
-        session.save();
+        node.getSession().save();
+        stylePath = node.getPath() + "/jcr:content/test-harness/par/test-1";
 
         // ParSys
-        node = JcrUtil.createPath(Constants.CONTENT_PAGE_PATH + "/jcr:content/par", "nt:unstructured", session);
+        node = JcrUtil.createPath(page.getPath() + "/jcr:content/par", "nt:unstructured", getSession());
         node.setProperty("sling:resourceType", "activecq/api/test/support/parsys");
-        session.save();
+        node.getSession().save();
 
         // Component 1
-        node = JcrUtil.createPath(Constants.CONTENT_PAGE_PATH + "/jcr:content/par/test-1", "nt:unstructured", session);
-        node.setProperty("sling:resourceType", "activecq/api/test/activecomponent");
+        node = page.buildParResource("test-1", component.getResourceType(), getSession());
         node.setProperty(Constants.PROPERTY_PLAIN_TEXT, Constants.CONTENT_PLAIN_TEXT);
         node.setProperty(Constants.PROPERTY_RICH_TEXT, Constants.CONTENT_RICH_TEXT);
         node.setProperty(Constants.PROPERTY_DOUBLE, Constants.CONTENT_DOUBLE);
         node.setProperty(Constants.PROPERTY_LONG, Constants.CONTENT_LONG);
         node.setProperty(Constants.PROPERTY_STR_ARRAY, Constants.CONTENT_STR_ARRAY);
         node.setProperty(Constants.PROPERTY_BOOLEAN, Constants.CONTENT_BOOLEAN);
-        session.save();
+        node.getSession().save();
+        testResourcePath = node.getPath();
 
         // Extra Resource 
-        node = JcrUtil.createPath(Constants.EXTRA_RESOURCE_PATH, "nt:unstructured", session);
+        node = JcrUtil.createPath(Constants.EXTRA_RESOURCE_PATH, "nt:unstructured", getSession());
         node.setProperty(Constants.PROPERTY_PLAIN_TEXT, Constants.EXTRA_PLAIN_TEXT);
         node.setProperty(Constants.PROPERTY_RICH_TEXT, Constants.EXTRA_RICH_TEXT);
         node.setProperty(Constants.PROPERTY_DOUBLE, Constants.EXTRA_DOUBLE);
         node.setProperty(Constants.PROPERTY_LONG, Constants.EXTRA_LONG);
         node.setProperty(Constants.PROPERTY_STR_ARRAY, Constants.EXTRA_STR_ARRAY);
         node.setProperty(Constants.PROPERTY_BOOLEAN, Constants.EXTRA_BOOLEAN);
-        session.save();
+        node.getSession().save();
+        
+        // Remote Tester        
+        setRemoteTester(new RemoteTester(
+                "admin",
+                "admin",
+                "http",
+                "localhost:5502",
+                testResourcePath,
+                "GET"));        
     }
 
     @After
+    @Override
     public void tearDown() throws Exception {
-        removeNodes(getResourceResolver(), 
-                Constants.ROOT_DESIGN_PATH,
-                Constants.ROOT_CONTENT_PATH
-                );
-        
+       /*removeNodes(getResourceResolver(),
+                design.getDeletePath(),
+                component.getDeletePath(),
+                page.getDeletePath());*/
         super.tearDown();
     }
 
-    /** REMOTE TEST **/
-    
+    /**
+     * REMOTE TEST *
+     */
     @Test
     public void test_getComponent() {
-        remote.execute("getComponent");
+        this.assertEquals(remote.execute("getComponent"),
+                "active-component");
     }
 
     @Test
     public void test_getComponentContext() {
-        remote.execute("getComponentContext");
+        this.assertEquals(remote.execute("getComponentContext"),
+                "active-component");
     }
 
     @Test
     public void test_getDesign() {
-        remote.execute("getDesign");
+        this.assertEquals(remote.execute("getDesign"),
+                design.getPath());
     }
 
     @Test
     public void test_getDesignProperties() {
-        remote.execute("getDesignProperties");
+        this.assertEquals(remote.execute("getDesignProperties"),
+                "8");
     }
 
     @Test
     public void test_getDesignProperty() {
-        remote.execute("getDesignProperty");
+        this.assertEquals(remote.execute("getDesignProperty"),
+                Constants.DESIGN_PLAIN_TEXT,
+                Constants.DESIGN_RICH_TEXT,
+                String.valueOf(Constants.DESIGN_DOUBLE),
+                String.valueOf(Constants.DESIGN_LONG),
+                String.valueOf(Constants.DESIGN_BOOLEAN),
+                "This is the default design value",
+                ArrayUtils.toString(Constants.DESIGN_STR_ARRAY));
     }
 
     @Test
     public void test_getDesigner() {
-        remote.execute("getDesigner");
+        this.assertEquals(remote.execute("getDesigner"),
+                "true");
     }
 
     @Test
     public void test_getEditContext() {
-        remote.execute("getEditContext");
+        this.assertEquals(remote.execute("getEditContext"),
+                "true");
     }
 
     @Test
     public void test_getNode() {
-        remote.execute("getNode");
+        this.assertEquals(remote.execute("getNode"),
+                testResourcePath);
     }
 
     @Test
     public void test_getPage() {
-        remote.execute("getPage");
-    }    
-    
+        this.assertEquals(remote.execute("getPage"),
+                page.getPath());
+    }
+
     @Test
     public void test_getPageManager() {
-        remote.execute("getPageManager");
+        this.assertEquals(remote.execute("getPageManager"),
+                "true");
     }
 
     @Test
     public void test_getPageProperties() {
-        remote.execute("getPageProperties");
+        this.assertEquals(remote.execute("getPageProperties"),
+                "7");
     }
-        
+
     @Test
     public void test_getProperties() {
-        remote.execute("getProperties");
+        this.assertEquals(remote.execute("getProperties"),
+                "8");
     }
 
     @Test
     public void test_getProperty() {
-        remote.execute("getProperty");
+        this.assertEquals(remote.execute("getProperty"),
+                Constants.CONTENT_PLAIN_TEXT,
+                Constants.CONTENT_RICH_TEXT,
+                String.valueOf(Constants.CONTENT_DOUBLE),
+                String.valueOf(Constants.CONTENT_LONG),
+                String.valueOf(Constants.CONTENT_BOOLEAN),
+                "This is the content resource default value",
+                ArrayUtils.toString(Constants.CONTENT_STR_ARRAY));
     }
 
     @Test
     public void test_getProperty_Resource() {
-        remote.execute("getPropertyResource");
-    }
+        this.assertEquals(remote.execute("getPropertyResource"),
+                Constants.EXTRA_PLAIN_TEXT,
+                Constants.EXTRA_RICH_TEXT,
+                String.valueOf(Constants.EXTRA_DOUBLE),
+                String.valueOf(Constants.EXTRA_LONG),
+                String.valueOf(Constants.EXTRA_BOOLEAN),
+                "This is the extra default value",
+                ArrayUtils.toString(Constants.EXTRA_STR_ARRAY));    }
 
     @Test
     public void test_getQueryBuilder() {
-        remote.execute("getQueryBuilder");
+        this.assertEquals(remote.execute("getQueryBuilder"),
+                "true");
     }
 
     @Test
     public void test_getRequest() {
-        remote.execute("getRequest");
+        this.assertEquals(remote.execute("getRequest"),
+                testResourcePath + ".getRequest.html");
     }
 
     @Test
     public void test_getRequestDesign() {
-        remote.execute("getRequestDesign");
+        this.assertEquals(remote.execute("getRequestDesign"),
+                design.getPath());
     }
 
     @Test
     public void test_getRequestDesignProperties() {
-        remote.execute("getRequestDesignProperties");
+        this.assertEquals(remote.execute("getRequestDesignProperties"),
+                "8");
     }
-    
+
     @Test
     public void test_getRequestPage() {
-        remote.execute("getRequestPage");
+        this.assertEquals(remote.execute("getRequestPage"),
+                page.getPath());
     }
 
     @Test
     public void test_getRequestPageProperties() {
-        remote.execute("getRequestPageProperties");
-    }    
+        this.assertEquals(remote.execute("getRequestPageProperties"),
+                "7");
+    }
 
     @Test
     public void test_getRequestStyle() {
-        remote.execute("getRequestStyle");
-    }    
-    
+        this.assertEquals(remote.execute("getRequestStyle"),
+                design.getPath() + "/jcr:content/test-harness/par/test-1");
+    }
+
     @Test
     public void test_getResource() {
-        remote.execute("getResource");
+        this.assertEquals(remote.execute("getResource"),
+                testResourcePath);
     }
 
     @Test
     public void test_getResourceDesign() {
-        remote.execute("getResourceDesign");
+        this.assertEquals(remote.execute("getResourceDesign"),
+                design.getPath());
     }
 
     @Test
     public void test_getResourceDesignProperties() {
-        remote.execute("getResourceDesignProperties");
-    }    
-    
+        this.assertEquals(remote.execute("getResourceDesignProperties"),
+                "8");
+    }
+
     @Test
     public void test_getResourcePage() {
-        remote.execute("getResourcePage");
+        this.assertEquals(remote.execute("getResourcePage"),
+                page.getPath());
     }
 
     @Test
     public void test_getResourcePageProperties() {
-        remote.execute("getResourcePageProperties");
-    }    
-    
-    @Test
-    public void test_getResourceResolver() {
-        remote.execute("getResourceResolver");
+        this.assertEquals(remote.execute("getResourcePageProperties"),
+                "7");
     }
-    
-    @Test
-    public void test_getResourceStyle() {
-        remote.execute("getResourceStyle");
-    }    
 
     @Test
-    public void test_getReponse() {
-        remote.execute("getReponse");
+    public void test_getResourceResolver() {
+        this.assertEquals(remote.execute("getResourceResolver"),
+                "true");
+    }
+
+    @Test
+    public void test_getResourceStyle() {
+        this.assertEquals(remote.execute("getResourceStyle"),
+                design.getPath() + "/jcr:content/test-harness/par/test-1");
+    }
+
+    @Test
+    public void test_getResponse() {
+        this.assertEquals(remote.execute("getResponse"),
+                "true");
     }
 
     @Test
     public void test_getService() {
-        remote.execute("getService");
+        this.assertEquals(remote.execute("getService"),
+                "true");
     }
 
     @Test
     public void test_getStyle() {
-        remote.execute("getStyle");
+        this.assertEquals(remote.execute("getStyle"),
+                design.getPath() + "/jcr:content/test-harness/par/test-1");
     }
 
     @Test
     public void test_hasNode() {
-        remote.execute("hasNode");
+        this.assertEquals(remote.execute("hasNode"),
+                "true");
     }
+    
+    @Test
+    public void test_jstl() {
+        this.assertEquals(remote.execute("jsstl"),
+                "active-component");
+    }    
 }

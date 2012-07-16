@@ -15,7 +15,7 @@
  */
 package com.activecq.api.utils;
 
-import com.activecq.api.ActiveForm;
+import com.activecq.api.AbstractActiveForm;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,15 +29,16 @@ import org.apache.sling.api.resource.ResourceUtil;
 public class ValidationUtil {
 
     public enum Comparisons {
-
         LESS_THAN,
         LESS_THAN_OR_EQUAL_TO,
         EQUAL_TO,
         GREATER_THAN,
         GREATER_THAN_OR_EQUAL_TO
     };
+    
+    private ValidationUtil() { }
 
-    public static boolean isPresent(ActiveForm form, String key) {
+    public static boolean isPresent(AbstractActiveForm form, String key) {
         if (!form.has(key)) {
             return false;
         }
@@ -52,7 +53,7 @@ public class ValidationUtil {
         }
     }
 
-    public static boolean isValidPath(ActiveForm form, String key, ResourceResolver resourceResolver)
+    public static boolean isValidPath(AbstractActiveForm form, String key, ResourceResolver resourceResolver)
             throws NullPointerException {
         if (!isPresent(form, key)) {
             return false;
@@ -73,7 +74,7 @@ public class ValidationUtil {
         }
     }
 
-    public static boolean isConfirmed(ActiveForm form, String key) {
+    public static boolean isConfirmed(AbstractActiveForm form, String key) {
         if (!isPresent(form, key)) {
             return false;
         }
@@ -82,7 +83,7 @@ public class ValidationUtil {
         return StringUtils.equalsIgnoreCase(val, "true");
     }
 
-    public  static <T> boolean isNotIn(ActiveForm form, String key, T... blacklist) {
+    public  static <T> boolean isNotIn(AbstractActiveForm form, String key, T... blacklist) {
         if (!isPresent(form, key)) {
             return false;
         }
@@ -109,7 +110,7 @@ public class ValidationUtil {
         return true;
     }
 
-    public static <T> boolean isIn(ActiveForm form, String key, T... whitelist) {
+    public static <T> boolean isIn(AbstractActiveForm form, String key, T... whitelist) {
         if (!isPresent(form, key)) {
             return false;
         }
@@ -154,7 +155,7 @@ public class ValidationUtil {
      *
      * return result; }
      */
-    public static boolean isLength(ActiveForm form, String key, Comparisons comparison, int length) {
+    public static boolean isLength(AbstractActiveForm form, String key, Comparisons comparison, int length) {
         if (!isPresent(form, key)) {
             return false;
         }
@@ -184,7 +185,7 @@ public class ValidationUtil {
     }
 
 
-    public static boolean isOfFormat(ActiveForm form, String key, String regex) {
+    public static boolean isOfFormat(AbstractActiveForm form, String key, String regex) {
         if (!isPresent(form, key)) {
             return false;
         }

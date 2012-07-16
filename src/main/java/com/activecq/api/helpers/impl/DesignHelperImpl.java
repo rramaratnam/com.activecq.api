@@ -95,7 +95,7 @@ public class DesignHelperImpl implements DesignHelper {
         String src = cssSrc(path, page);
 
         if (StringUtils.stripToNull(src) == null) {
-            return "<!-- Missing CSS : " + path + " -->";
+            return "<!-- Missing CSS : " + path + ".css -->";
         }
 
         if (StringUtils.stripToNull(media) == null) {
@@ -196,7 +196,7 @@ public class DesignHelperImpl implements DesignHelper {
         String src = scriptSrc(path, page);
 
         if (StringUtils.stripToNull(src) == null) {
-            return "<!-- Missing Script : " + path + " -->";
+            return "<!-- Missing Script : " + path + ".js -->";
         }
 
         // Begin writing script tag

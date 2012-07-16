@@ -27,6 +27,8 @@ import org.apache.commons.lang.StringUtils;
  */
 public class HttpRequestUtil {
 
+    private HttpRequestUtil() { } 
+    
     public static String getParameterOrAttribute(HttpServletRequest request,String key) {
         return getParameterOrAttribute(request, key, null);
     }

@@ -23,7 +23,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
  *
  * @author david
  */
-public class I18nPlugin {
+public class I18nPlugin extends BasePlugin {
 
     private boolean enabled;
     private I18n i18n;
@@ -33,8 +33,9 @@ public class I18nPlugin {
      *
      * @param exposed
      */
-    public I18nPlugin(CorePlugin core) {        
-        this.i18n = new I18n(core.getRequest());
+    public I18nPlugin(SlingHttpServletRequest request) {
+        super(request);
+        this.i18n = new I18n(request);
         this.enabled = (this.i18n != null);
     }
 

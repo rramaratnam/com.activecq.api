@@ -15,6 +15,8 @@
  */
 package com.activecq.api.testing;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -34,17 +36,24 @@ import static org.junit.Assert.*;
  */
 public class RemoteTester {
 
-    public static final String REGEX_TRUE = "<!--\\ Begin\\ Test\\ -->((.|\\n)*)false((.|\\n)*)<!--\\ End\\ Test\\ -->";
+    public static final String TEST_BEGIN = "<!-- Begin Test -->";
+    public static final String TEST_END = "<!-- End Test -->";
+    public static final String REGEX_TEST = "((.|\\n)*)<!--\\ Begin\\ Test\\ -->((.|\\n)*)<!--\\ End\\ Test\\ -->((.|\\n)*)";
+    public static final String REGEX_TRUE = "((.|\\n)*)<!--\\ Begin\\ Test\\ -->((.|\\n)*)false((.|\\n)*)<!--\\ End\\ Test\\ -->((.|\\n)*)";
     
     private final String USERNAME;
     private final String PASSWORD;
-    private final String URI;
+    private final String SCHEME;
+    private final String HOST;
+    private final String PATH;
     private final String METHOD;
 
-    public RemoteTester(String username, String password, String uri, String method) {
+    public RemoteTester(String username, String password, String scheme, String host, String path, String method) {
         this.USERNAME = username;
         this.PASSWORD = password;
-        this.URI = uri;
+        this.SCHEME = scheme;
+        this.HOST = host;
+        this.PATH = path;
         this.METHOD = method;
     }
 
@@ -64,10 +73,12 @@ public class RemoteTester {
      * @param selector
      * @return
      */
-    private HttpMethod getMethod(String selector, String extension, String queryParams) {
+    private HttpMethod getMethod(String path, String selector, String extension, String queryParams) {
         HttpMethod method;
-        String uri = this.URI + "." + selector + "." + extension;
-                
+        String tmp = path == null ? this.getURI() : this.getURI(path);
+        
+        String uri = tmp + "." + selector + "." + extension;
+        
         if (StringUtils.equalsIgnoreCase("POST", this.METHOD)) {
             method = new PostMethod(uri);
         } else {
@@ -82,46 +93,77 @@ public class RemoteTester {
         return method;
     }
 
+    public String getURI() {
+        String tmp = this.SCHEME + "://" + this.HOST;
+        if(StringUtils.startsWith(this.PATH, "/")) {
+           return tmp + this.PATH; 
+        }
+        
+        return tmp + "/" + this.PATH;
+    }
+    
+    public String getURI(String path) {
+        String tmp = this.SCHEME + "://" + this.HOST;
+        if(StringUtils.startsWith(path, "/")) {
+           return tmp + path; 
+        }
+        
+        return tmp + "/" + path;
+    }    
+        
     /**
      *
      * @param test
      */
-    public void execute(String testName) {
-        execute(testName,
+    public List<String> execute(String testName) {
+        return execute(testName,
                 200,
                 REGEX_TRUE,
                 null);
     }
 
-    public void execute(String testName, String queryParams) {
-        execute(testName,
+    public List<String> execute(String testName, String queryParams) {
+        return execute(testName,
                 200,
                 REGEX_TRUE,
                 queryParams);        
     }
-    
-    
-    public void execute(String testName, int expStatus, String regex, String queryParams) {
+
+    public List<String> execute(String testName, int expStatus, String regex, String queryParams) {
+        return execute(null, testName, expStatus, regex, queryParams);        
+    }
+        
+    public List<String> execute(String path, String testName, int expStatus, String regex, String queryParams) {
         HttpClient client = getClient();
-        HttpMethod method = getMethod(testName, "html", queryParams);
-                
+        HttpMethod method = getMethod(null, testName, "html", queryParams);
+        
         try {
             int status = client.executeMethod(method);
+            assertEquals(expStatus, status);
+            
             final String response = method.getResponseBodyAsString();
 
-            assertEquals(expStatus, status);
-
-            Pattern p = Pattern.compile(regex);
-            Matcher m = p.matcher(response);
-            final boolean result = !m.find();
-
-            assertEquals(true, result);
-
+            System.out.println("Test: " + testName + " > " + status);
+            System.out.println("Response: " + response);
+            
+            assertEquals("No test-block could be found.", true, isTestFormatted(response));            
+                        
+            String[] results = StringUtils.substringsBetween(response, TEST_BEGIN, TEST_END);
+            return Arrays.asList(results);
         } catch (Exception ex) {
+            System.out.println("ERROR: " + ex.getMessage());
             Logger.getLogger(RemoteTester.class.getName()).log(Level.SEVERE, null, ex);
             fail("Exception: " + ex.getMessage());
         } finally {
             method.releaseConnection();
         }
+        
+        return null;
+    }    
+    
+    private boolean isTestFormatted(String data) {
+        Pattern p = Pattern.compile(REGEX_TEST, Pattern.MULTILINE);
+        Matcher m = p.matcher(data);
+        return m.find();        
     }
 }

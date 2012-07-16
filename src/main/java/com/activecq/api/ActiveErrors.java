@@ -33,8 +33,12 @@ public class ActiveErrors {
     /**
      * Private data modeling attributes
      */
-    protected Map<String, String> data;
+    private Map<String, String> data;
 
+    public ActiveErrors() {
+        this.data = new HashMap<String, String>();
+    }
+        
     /**
      * Constructor for modeling the data object represented in the parameter Map
      * 
@@ -44,34 +48,7 @@ public class ActiveErrors {
         this.data = new HashMap<String, String>(map);
     }
 
-    /**
-     * Constructor for modeling the data object submitted via HTTP
-     * 
-     * @param request
-     */
-    @SuppressWarnings("unchecked")
-    public ActiveErrors(SlingHttpServletRequest request) {
-        this.data = new HashMap<String, String>();
-        
-        if(this.hasIncomingRequestAttributeData(request)) {
-            final ActiveForm incomingForm = (ActiveForm) request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE);
-            if(incomingForm.hasErrors()) {
-                this.data = incomingForm.getErrors().toMap();
-            }            
-        } else if (this.hasIncomingQueryParamData(request)) {
-            String errorData = null;        
-            errorData = request.getRequestParameter(CQ_ERRORS).getString();
-        
-            if(StringUtils.stripToNull(errorData) != null) {
-            try {
-                    JSONObject jsonErrors = new JSONObject(ActiveForm.decode(errorData));
-                    this.data = TypeUtil.toMap(jsonErrors);
-                } catch (UnsupportedEncodingException e) {
-                } catch (JSONException e) {
-                }
-            }
-        }
-    }
+
 
     /**
      * Checks if an error exists
@@ -188,12 +165,24 @@ public class ActiveErrors {
         return this.data.isEmpty();
     }
 
+    public void reset() {
+        this.data = new HashMap<String, String>();
+    }
+    
+    public void resetTo(Map<String, String> map) {
+        if(map == null) { 
+            this.data = new HashMap<String, String>();
+        } else {
+            this.data = map;
+        }
+    }
+    
     // Private Methods
     
     /**
      * Checks if CQ Error data has been set on the request
      */
-    private boolean hasIncomingRequestAttributeData(SlingHttpServletRequest request) {
+    public static boolean hasIncomingRequestAttributeData(SlingHttpServletRequest request) {
         if(request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE) != null) {
             if(request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE) instanceof ActiveForm) {
                 ActiveForm form = (ActiveForm) request.getAttribute(ActiveForm.CQ_FORM_REQUEST_ATTRIBUTE);
@@ -204,16 +193,11 @@ public class ActiveErrors {
         return false;
     }
 
-    private boolean hasIncomingQueryParamData(SlingHttpServletRequest request) {            
+    public static boolean hasIncomingQueryParamData(SlingHttpServletRequest request) {            
         RequestParameter param = request.getRequestParameter(CQ_ERRORS);
         if (param == null) {
             return false;
         }
         return (StringUtils.stripToNull(param.getString()) != null);
-    }
-        
-    
-    private boolean hasCookieErrorData(SlingHttpServletRequest request) {
-        return (CookieUtil.getCookie(request, CQ_ERRORS) != null);
-    }    
+    }   
 }

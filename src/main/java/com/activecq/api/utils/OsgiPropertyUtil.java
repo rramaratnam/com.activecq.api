@@ -26,6 +26,8 @@ import org.apache.commons.lang.StringUtils;
  */
 public class OsgiPropertyUtil {
     
+    private OsgiPropertyUtil() { } 
+    
     public static AbstractMap.SimpleEntry toSimpleEntry(String value, String separator) {
         String[] tmp = StringUtils.split(value, separator);
         

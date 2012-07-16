@@ -41,7 +41,7 @@ public abstract class ActiveForm {
 
     public static final String CQ_FORM = "_cq_f";
     public static final String CQ_FORM_SUCCESS = "_cq_fs";
-    protected static final String CQ_FORM_REQUEST_ATTRIBUTE = "_cq_f_req_attr";
+    public static final String CQ_FORM_REQUEST_ATTRIBUTE = "_cq_f_req_attr";
 
     public final FailurePlugin Failure = new FailurePlugin();
     public final SuccessPlugin Success = new SuccessPlugin();
@@ -66,7 +66,7 @@ public abstract class ActiveForm {
      */
     protected static class Properties extends ActiveProperties {
     }
-    public final ActiveProperties Properties;
+    //public final ActiveProperties Properties;
     /**
      * *************************************************************************
      * ActiveForm Implementation
@@ -75,81 +75,12 @@ public abstract class ActiveForm {
     /**
      * Private data modeling attributes
      */
-    private Map<String, Object> data = new HashMap<String, Object>();
-    private ActiveErrors errors = new ActiveErrors(new HashMap<String, String>());
+    private Map<String, Object> data;
+    private ActiveErrors errors;
 
-    protected ActiveForm(ActiveProperties properties) {
-        this.Properties = properties;
-    }
-
-    /**
-     * Constructor to modeling the parameter Resource
-     *
-     * @param resource
-     */
-    public ActiveForm(Resource resource) {
-        ValueMap map = resource.adaptTo(ValueMap.class);
-        this.data = new HashMap<String, Object>(map);
-        this.Properties = new ActiveProperties();
-    }
-
-    /**
-     * Constructor for modeling the data object represented in the parameter Map
-     *
-     * @param map
-     */
-    public ActiveForm(Map<String, Object> map) {
-        this.data = new HashMap<String, Object>(map);
-        this.Properties = new ActiveProperties();
-    }
-
-    /**
-     * Constructor for modeling the data object represented in the parameter Map
-     *
-     * @param map
-     */
-    public ActiveForm(Map<String, Object> map, ActiveProperties properties) {
-        for (String key : properties.getKeys()) {
-            this.data.put(key, map.get(key));
-        }
-
-        this.Properties = properties;
-    }
-
-    /**
-     * Constructor for modeling the data object submitted via HTTP
-     *
-     * @param request
-     */
-    public ActiveForm(SlingHttpServletRequest request, ActiveProperties properties) {
-        this.Properties = properties;
-        this.data = new HashMap<String, Object>(request.getParameterMap().size());
-
-        for (String key : this.Properties.getKeys()) {
-            this.data.put(key, StringUtils.stripToEmpty(request.getParameter(key)));
-        }
-
-        if(this.hasIncomingRequestAttributeData(request)) {
-            // Get Form and Errors from Request Attr
-            // This is to handle when the "Forward" method is used
-            final ActiveForm incomingForm = (ActiveForm) request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE);
-            this.errors = new ActiveErrors(request);
-            this.data = incomingForm.toMap();            
-        } else if (this.hasIncomingQueryParamData(request)) {
-            // Get Form and Erros from Query Params
-            // This is to handle the "Redirect" method
-            String formData = request.getRequestParameter(CQ_FORM).getString();
-            this.errors = new ActiveErrors(request);
-
-            if (StringUtils.stripToNull(formData) != null) {
-                try {
-                    JSONObject jsonForm = new JSONObject(decode(formData));
-                    this.data = TypeUtil.toMap(jsonForm);
-                } catch (UnsupportedEncodingException e) {
-                } catch (JSONException e) {
-                }
-            }
-        }
+    protected ActiveForm() {
+        this.data = new HashMap<String, Object>();
+        this.errors = new ActiveErrors();
     }
 
     /**
@@ -261,24 +192,18 @@ public abstract class ActiveForm {
         }
     }
 
-    protected void resetFormTo(Map<String, ? extends Object> map) {
+    public void resetTo(Map<String, ? extends Object> map) {
         if (map == null) {
             map = new HashMap<String, String>();
         }
 
         this.data = (Map<String, Object>) map;
+        this.errors = new ActiveErrors();
     }
 
-    protected void resetErrorsTo(Map<String, String> map) {
-        if (map == null) {
-            map = new HashMap<String, String>();
-        }
-
-        this.errors = new ActiveErrors(map);
-    }
-
-    protected void resetErrorsTo(ActiveErrors errors) {
-        this.errors = new ActiveErrors(errors.toMap());
+    public void reset() {
+       this.data = new HashMap<String, Object>();
+       this.errors = new ActiveErrors();
     }
 
     /**
@@ -371,118 +296,7 @@ public abstract class ActiveForm {
     public void setError(String key) {
         this.errors.set(key);
     }
-
-    // Form Methods
-    /**
-     * *
-     * Returns the a string of query parameters that hold Form and Form Error
-     * data
-     *
-     * @return
-     * @throws JSONException
-     * @throws UnsupportedEncodingException
-     */
-    public String getQueryParameters() throws JSONException,
-            UnsupportedEncodingException {
-
-        final String formData = this.toJSON().toString();
-        final String errorData = this.getErrors().toJSON().toString();
-
-        String params = ActiveForm.CQ_FORM;
-        params += "=";
-        params += encode(formData);
-        params += "&";
-        params += ActiveErrors.CQ_ERRORS;
-        params += "=";
-        params += encode(errorData);
-
-        return params;
-    }
-
-    // Resource Methods
-    /**
-     * Merge the properties of a Resource into ActiveResource
-     */
-    public int merge(Resource resource, boolean overwrite) {
-        int count = 0;
-        ValueMap resourceProperties = resource.adaptTo(ValueMap.class);
-
-        List<String> keys;
-
-        if (Properties != null) {
-            keys = Properties.getKeys();
-        } else {
-            keys = Arrays.asList(this.data.keySet().toArray(new String[0]));
-        }
-
-        for (String key : keys) {
-            if (resourceProperties.containsKey(key)) {
-                if (overwrite || this.isEmpty(key)) {
-                    this.set(key, resourceProperties.get(key));
-                    count++;
-                }
-            }
-        }
-
-        return count;
-    }
-
-    public String getRedirectPath(Page page) throws JSONException,
-            UnsupportedEncodingException {
-        return getRedirectPath(page.adaptTo(Resource.class));
-    }
-
-    public String getRedirectPath(Resource resource) throws JSONException,
-            UnsupportedEncodingException {
-        return getRedirectPath(resource.getPath().concat(".html"));
-    }
-
-    public String getRedirectPath(String path) throws JSONException,
-            UnsupportedEncodingException {
-        return path.concat("?").concat(this.getQueryParameters());
-    }
-
-    
-    /**
-     * *************************************************************************
-     * Private Methods
-     * *************************************************************************
-     */
-    /**
-     * Checks if CQ Form data has been set on the request
-     */
-    private boolean hasIncomingRequestAttributeData(SlingHttpServletRequest request) {
-        if(request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE) != null) {
-            return (request.getAttribute(CQ_FORM_REQUEST_ATTRIBUTE) instanceof ActiveForm);
-        } 
-        
-        return false;
-    }
-    
-    private boolean hasIncomingQueryParamData(SlingHttpServletRequest request) {
-        RequestParameter param = request.getRequestParameter(CQ_FORM);
-        if (param == null) {
-            return false;
-        }
-        return (StringUtils.stripToNull(param.getString()) != null);
-    }    
-
-    /**
-     * *************************************************************************
-     * Package Methods
-     * *************************************************************************
-     */
-    static String decode(String encodedData) throws UnsupportedEncodingException {
-        final Base64 base64 = new Base64(true);
-        final String tmp = base64.decode(encodedData).toString();
-        return URLDecoder.decode(tmp, "UTF-8");
-    }
-
-    static String encode(String unencodedData) throws UnsupportedEncodingException {
-        final Base64 base64 = new Base64(true);
-        final String tmp = base64.encodeToString(unencodedData.getBytes());
-        return URLEncoder.encode(tmp, "UTF-8");
-    }
+  
 
     /***************************************************************************
      * 

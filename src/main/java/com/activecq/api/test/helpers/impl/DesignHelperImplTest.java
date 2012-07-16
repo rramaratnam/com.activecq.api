@@ -15,18 +15,15 @@
  */
 package com.activecq.api.test.helpers.impl;
 
-import com.activecq.api.testing.AbstractRemoteTest;
+import com.activecq.api.testing.AbstractRemoteTemplate;
 import com.activecq.api.testing.RemoteTester;
 import com.day.cq.commons.jcr.JcrUtil;
-import com.day.cq.wcm.api.Page;
-import java.util.Map;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.junit.annotations.SlingAnnotationsTestRunner;
 import org.apache.sling.junit.annotations.TestReference;
 import org.junit.After;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +34,7 @@ import org.junit.runner.RunWith;
  * @author david
  */
 @RunWith(SlingAnnotationsTestRunner.class)
-public class DesignHelperImplTest extends AbstractRemoteTest {
+public class DesignHelperImplTest extends AbstractRemoteTemplate {
 
     @TestReference
     private ResourceResolverFactory resourceResolverFactory;
@@ -57,7 +54,9 @@ public class DesignHelperImplTest extends AbstractRemoteTest {
         setRemoteTester(new RemoteTester(
                 "admin",
                 "admin",
-                "http://localhost:5502" + WCMHelperImplTest.Constants.RESOURCE_PATH,
+                "http",
+                "localhost:5502",
+                WCMHelperImplTest.Constants.RESOURCE_PATH,
                 "GET"));
 
         Session session = getSession();
@@ -81,7 +80,9 @@ public class DesignHelperImplTest extends AbstractRemoteTest {
      */
     @Test
     public void testCssTag_String_Page() {
-        remote.execute("cssTag");
+        this.assertEquals(remote.execute("cssTag"),
+                "<!-- Missing CSS : does-not-exist.css -->",
+                "<link href=\"exists.css\"/>");
     }
 
     /**
@@ -89,7 +90,9 @@ public class DesignHelperImplTest extends AbstractRemoteTest {
      */
     @Test
     public void testCssSrc() {
-        remote.execute("cssSrc");
+        this.assertEquals(remote.execute("cssSrc"),
+                "", // does-not-exist
+                "/exists.css");
     }
 
     /**

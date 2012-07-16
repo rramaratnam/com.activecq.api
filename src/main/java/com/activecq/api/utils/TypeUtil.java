@@ -15,7 +15,7 @@
  */
 package com.activecq.api.utils;
 
-import com.activecq.api.ActiveForm;
+import com.activecq.api.AbstractActiveForm;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -43,6 +43,8 @@ public class TypeUtil {
     private static final String NAME = "jcr:name:";
     private static final String URI = "jcr:uri:";
 
+    private TypeUtil() { }
+    
     /**
      * Turn a even length Array into a Map. The Array is expected to be in the
      * format: { key1, value1, key2, value2, ... , keyN, valueN }
@@ -82,7 +84,7 @@ public class TypeUtil {
             try {
                 map.put(key, json.get(key));
             } catch (JSONException ex) {
-                Logger.getLogger(ActiveForm.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AbstractActiveForm.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 

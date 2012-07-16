@@ -1,8 +1,6 @@
 <%@page session="false" 
         import="com.activecq.api.helpers.WCMHelper,
-                org.apache.commons.lang.StringUtils,
-                java.util.*,
-                java.lang.*"
+                com.activecq.api.helpers.WCMEditType"
 %><%@include file="/apps/activecq/global/global.jsp" %><%
 /** Begin Helper Setup **/
 WCMHelper helper = sling.getService(WCMHelper.class); 
@@ -10,5 +8,7 @@ WCMHelper helper = sling.getService(WCMHelper.class);
 %>
 
 <!-- Begin Test -->
-    <%= false %>
+    <%= helper.printEditBlock(sling, 
+            WCMEditType.IMAGE,
+            true) %>
 <!-- End Test -->

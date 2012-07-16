@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -31,6 +30,8 @@ import org.apache.commons.lang.StringUtils;
  */
 public class CookieUtil {
 
+    private CookieUtil() { }
+    
     public static boolean addCookie(Cookie cookie, HttpServletResponse response) {
         if(cookie == null || response == null) { return false; }
         

@@ -24,6 +24,9 @@ import org.apache.sling.api.request.RequestPathInfo;
  * @author david
  */
 public class PathInfoUtil {
+    
+    private PathInfoUtil() { }
+    
     public static String getQueryParam(SlingHttpServletRequest request, String key) {
         return request.getParameter(key);
     }

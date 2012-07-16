@@ -28,6 +28,8 @@ import org.apache.sling.api.resource.ValueMap;
  * @author david
  */
 public class TextUtil {
+    
+    private TextUtil() { }
 
     /** 
      * Returns first non-null value from the parameter list

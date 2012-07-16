@@ -16,6 +16,7 @@
 package com.activecq.api.plugins;
 
 import com.day.cq.wcm.api.components.Component;
+import com.day.cq.wcm.commons.WCMUtils;
 import java.util.HashMap;
 import org.apache.sling.api.SlingHttpServletRequest;
 
@@ -23,14 +24,13 @@ import org.apache.sling.api.SlingHttpServletRequest;
  *
  * @author david
  */
-public class PersistencePlugin {
+public class PersistencePlugin extends BasePlugin {
 
     private Component component;
-    private SlingHttpServletRequest request;
 
-    public PersistencePlugin(CorePlugin exposed) {
-        this.component = exposed.getComponent();
-        this.request = exposed.getRequest();
+    public PersistencePlugin(SlingHttpServletRequest request) {
+        super(request);
+        this.component = WCMUtils.getComponent(this.resource);
     }
 
     /**

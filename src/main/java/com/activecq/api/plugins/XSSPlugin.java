@@ -20,20 +20,22 @@ import com.day.cq.xss.XSSProtectionException;
 import com.day.cq.xss.XSSProtectionService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.apache.sling.api.SlingHttpServletRequest;
 
 /**
  *
  * @author david
  */
-public class XSSPlugin {
+public class XSSPlugin extends BasePlugin {
 
     private boolean enabled;
     private ProtectionContext protectionContext;
     private ArrayList<String> whitelist;
     private XSSProtectionService service;
 
-    public XSSPlugin(CorePlugin exposed) {
-        this.service = exposed.getService(XSSProtectionService.class);
+    public XSSPlugin(SlingHttpServletRequest request) {
+        super(request);
+        this.service = this.getService(XSSProtectionService.class);
         this.whitelist = new ArrayList<String>();
         this.enabled = (service != null);
     }

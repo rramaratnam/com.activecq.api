@@ -147,7 +147,7 @@
                         <Sling-Initial-Content>
                             SLING-INF/initial-content/apps/activecq; path:=/apps/activecq; overwrite:=false; overwriteProperties:=true; uninstall:=true,
                             SLING-INF/initial-content/etc/designs; path:=/etc/designs; overwrite:=false; overwriteProperties:=true; uninstall:=true,
-                            SLING-INF/initial-content/content/activecq; path:=/content/activecq; overwrite:=false; overwriteProperties:=true; uninstall:=true
+                            <!-- SLING-INF/initial-content/content/activecq; path:=/content/activecq; overwrite:=false; overwriteProperties:=true; uninstall:=true -->
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

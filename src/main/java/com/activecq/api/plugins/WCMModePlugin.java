@@ -22,23 +22,36 @@ import org.apache.sling.api.SlingHttpServletRequest;
  *
  * @author david
  */
-public class WCMModePlugin {
+public class WCMModePlugin extends BasePlugin {
 
-    private WCMMode wcmMode;
+    private WCMMode current;
+    private WCMMode previous;
+    private WCMMode original;
 
-    public WCMModePlugin(CorePlugin core) {
-        this.wcmMode = WCMMode.fromRequest(core.getRequest());;
+    public WCMModePlugin(SlingHttpServletRequest request) {
+        super(request);
+        this.original = WCMMode.fromRequest(this.request);
+        this.previous = this.original;
+        this.current = this.previous;
     }
 
-    public void switchTo(SlingHttpServletRequest request, WCMMode mode) {
-        if (wcmMode != null) {
+    public void switchTo(WCMMode mode) {
+        if (mode == null) {
             return;
         }
-
-        wcmMode.toRequest(request);
+        
+        this.previous = this.current;
+        this.current = mode;
+        this.current.toRequest(this.request);
     }
 
-    public void switchBack(SlingHttpServletRequest request) {
-        this.wcmMode.toRequest(request);
+    public void switchBack() {
+        this.previous.toRequest(this.request);
     }
+    
+    public void switchToOriginal() {
+        this.previous = this.current;
+        this.current = this.original;
+        this.original.toRequest(this.request);
+    }    
 }

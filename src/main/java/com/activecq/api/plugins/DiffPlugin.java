@@ -20,6 +20,7 @@ import com.day.cq.commons.DiffInfo;
 import com.day.cq.commons.DiffService;
 import com.day.cq.wcm.api.WCMMode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
@@ -27,17 +28,19 @@ import org.apache.sling.api.resource.ValueMap;
  *
  * @author david
  */
-public class DiffPlugin {
+public class DiffPlugin extends BasePlugin {
     private static final String REQUEST_PARAM = "cq_diffTo";
     private final DiffService diffService;
     
     private boolean enabled;
     
-    public DiffPlugin(CorePlugin core) {
+    public DiffPlugin(SlingHttpServletRequest request) {
+        super(request);
+        
         // Must be in Diff Mode and Preview Mode to be enabled
-        this.enabled = HttpRequestUtil.hasParameter(core.getRequest(), REQUEST_PARAM) &&
-                WCMMode.PREVIEW.equals(WCMMode.fromRequest(core.getRequest()));
-        this.diffService = core.getService(DiffService.class);        
+        this.enabled = HttpRequestUtil.hasParameter(this.request, REQUEST_PARAM) &&
+                WCMMode.PREVIEW.equals(WCMMode.fromRequest(this.request));
+        this.diffService = this.getService(DiffService.class);        
     }
     
     public boolean isEnabled() {

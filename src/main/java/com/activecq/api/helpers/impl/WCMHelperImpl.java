@@ -15,10 +15,8 @@
  */
 package com.activecq.api.helpers.impl;
 
-import com.activecq.api.ActiveComponent;
 import com.activecq.api.helpers.WCMEditType;
 import com.activecq.api.helpers.WCMHelper;
-import com.activecq.api.plugins.CorePlugin;
 import com.day.cq.wcm.api.WCMMode;
 import com.day.cq.wcm.commons.WCMUtils;
 import java.io.IOException;
@@ -136,9 +134,7 @@ public class WCMHelperImpl implements WCMHelper {
     /**
      * 
      */
-    
-
-    
+        
     public boolean printEditBlock(SlingScriptHelper sling,
             WCMEditType editType,
             boolean... conditions) {
